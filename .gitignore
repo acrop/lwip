@@ -9,7 +9,7 @@
 /.vscode/ipch
 
 /doc/doxygen/output/html
-
+lwip.Doxyfile
 /test/fuzz/output
 /test/fuzz/lwip_fuzz
 /test/fuzz/lwip_fuzz2

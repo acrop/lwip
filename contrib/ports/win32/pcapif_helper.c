@@ -10,7 +10,7 @@
 
 #include "lwip/arch.h"
 
-#ifdef WIN32
+#ifdef _WIN32
 
 #define WIN32_LEAN_AND_MEAN
 
@@ -114,7 +114,7 @@ pcapifh_free_readonly_mem(void *data)
   }
 }
 
-#else /* WIN32 */
+#else /* _WIN32 */
 
 /* @todo: add linux/unix implementation? */
 
@@ -138,4 +138,4 @@ void pcapifh_linkstate_close(struct pcapifh_linkstate* state)
   LWIP_UNUSED_ARG(state);
 }
 
-#endif /* WIN32 */
+#endif /* _WIN32 */

@@ -315,6 +315,8 @@ a lot of data that needs to be copied, this should be set high. */
 
 #endif /* PPP_SUPPORT */
 
+#define USE_DEFAULT_ETH_NETIF   0      /** Define this to 1 to enable a port-specific ethernet interface as default interface. */
+
 #endif /* LWIP_OPTTEST_FILE */
 
 /* The following defines must be done even in OPTTEST mode: */

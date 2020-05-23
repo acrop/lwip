@@ -217,7 +217,7 @@
  * Indicates if the MIB2 implementation of LWIP SNMP stack is used.
  */
 #if !defined SNMP_LWIP_MIB2 || defined __DOXYGEN__
-#define SNMP_LWIP_MIB2                      LWIP_SNMP
+#define SNMP_LWIP_MIB2                      MIB2_STATS
 #endif
 
 /**

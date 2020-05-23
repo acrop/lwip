@@ -217,6 +217,7 @@
 
 /* Includes ------------------------------------------------------------------*/
 #include "stm32l1xx_hal.h"
+#include <string.h>
 
 /** @addtogroup STM32L1xx_HAL_Driver
   * @{
@@ -1014,7 +1015,6 @@ HAL_StatusTypeDef HAL_UART_UnRegisterCallback(UART_HandleTypeDef *huart, HAL_UAR
   */
 HAL_StatusTypeDef HAL_UART_Transmit(UART_HandleTypeDef *huart, uint8_t *pData, uint16_t Size, uint32_t Timeout)
 {
-  uint16_t *tmp;
   uint32_t tickstart = 0U;
 
   /* Check that a Tx process is not already ongoing */
@@ -1041,12 +1041,13 @@ HAL_StatusTypeDef HAL_UART_Transmit(UART_HandleTypeDef *huart, uint8_t *pData, u
       huart->TxXferCount--;
       if (huart->Init.WordLength == UART_WORDLENGTH_9B)
       {
+        uint16_t tmp = 0;
         if (UART_WaitOnFlagUntilTimeout(huart, UART_FLAG_TXE, RESET, tickstart, Timeout) != HAL_OK)
         {
           return HAL_TIMEOUT;
         }
-        tmp = (uint16_t *) pData;
-        huart->Instance->DR = (*tmp & (uint16_t)0x01FF);
+        memcpy(&tmp, pData, sizeof(tmp));
+        huart->Instance->DR = (tmp & (uint16_t)0x01FF);
         if (huart->Init.Parity == UART_PARITY_NONE)
         {
           pData += 2U;
@@ -1096,7 +1097,6 @@ HAL_StatusTypeDef HAL_UART_Transmit(UART_HandleTypeDef *huart, uint8_t *pData, u
   */
 HAL_StatusTypeDef HAL_UART_Receive(UART_HandleTypeDef *huart, uint8_t *pData, uint16_t Size, uint32_t Timeout)
 {
-  uint16_t *tmp;
   uint32_t tickstart = 0U;
 
   /* Check that a Rx process is not already ongoing */
@@ -1129,15 +1129,16 @@ HAL_StatusTypeDef HAL_UART_Receive(UART_HandleTypeDef *huart, uint8_t *pData, ui
         {
           return HAL_TIMEOUT;
         }
-        tmp = (uint16_t *) pData;
         if (huart->Init.Parity == UART_PARITY_NONE)
         {
-          *tmp = (uint16_t)(huart->Instance->DR & (uint16_t)0x01FF);
+          uint16_t tmp = (uint16_t)(huart->Instance->DR & (uint16_t)0x01FF);
+          memcpy(pData, &tmp, sizeof(tmp));
           pData += 2U;
         }
         else
         {
-          *tmp = (uint16_t)(huart->Instance->DR & (uint16_t)0x00FF);
+          uint16_t tmp = (uint16_t)(huart->Instance->DR & (uint16_t)0x00FF);
+          memcpy(pData, &tmp, sizeof(tmp));
           pData += 1U;
         }
 
@@ -2892,15 +2893,14 @@ static void UART_DMARxOnlyAbortCallback(DMA_HandleTypeDef *hdma)
   */
 static HAL_StatusTypeDef UART_Transmit_IT(UART_HandleTypeDef *huart)
 {
-  uint16_t *tmp;
-
   /* Check that a Tx process is ongoing */
   if (huart->gState == HAL_UART_STATE_BUSY_TX)
   {
     if (huart->Init.WordLength == UART_WORDLENGTH_9B)
     {
-      tmp = (uint16_t *) huart->pTxBuffPtr;
-      huart->Instance->DR = (uint16_t)(*tmp & (uint16_t)0x01FF);
+      uint16_t tmp = 0;
+      memcpy(&tmp, huart->pTxBuffPtr, sizeof(tmp));
+      huart->Instance->DR = (uint16_t)(tmp & (uint16_t)0x01FF);
       if (huart->Init.Parity == UART_PARITY_NONE)
       {
         huart->pTxBuffPtr += 2U;
@@ -2964,22 +2964,21 @@ static HAL_StatusTypeDef UART_EndTransmit_IT(UART_HandleTypeDef *huart)
   */
 static HAL_StatusTypeDef UART_Receive_IT(UART_HandleTypeDef *huart)
 {
-  uint16_t *tmp;
-
   /* Check that a Rx process is ongoing */
   if (huart->RxState == HAL_UART_STATE_BUSY_RX)
   {
     if (huart->Init.WordLength == UART_WORDLENGTH_9B)
     {
-      tmp = (uint16_t *) huart->pRxBuffPtr;
       if (huart->Init.Parity == UART_PARITY_NONE)
       {
-        *tmp = (uint16_t)(huart->Instance->DR & (uint16_t)0x01FF);
+        uint16_t tmp = (uint16_t)(huart->Instance->DR & (uint16_t)0x01FF);
+        memcpy(huart->pRxBuffPtr, &tmp, sizeof(tmp));
         huart->pRxBuffPtr += 2U;
       }
       else
       {
-        *tmp = (uint16_t)(huart->Instance->DR & (uint16_t)0x00FF);
+        uint16_t tmp = (uint16_t)(huart->Instance->DR & (uint16_t)0x00FF);
+        memcpy(huart->pRxBuffPtr, &tmp, sizeof(tmp));
         huart->pRxBuffPtr += 1U;
       }
     }

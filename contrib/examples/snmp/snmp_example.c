@@ -37,7 +37,7 @@
 #include "examples/snmp/snmp_private_mib/private_mib.h"
 #include "snmp_example.h"
 
-#if LWIP_SNMP
+#if SNMP_LWIP_MIB2
 static const struct snmp_mib *mibs[] = {
   &mib2,
   &mib_private
@@ -46,7 +46,7 @@ static const struct snmp_mib *mibs[] = {
   , &snmpusmmib
 #endif
 };
-#endif /* LWIP_SNMP */
+#endif /* SNMP_LWIP_MIB2 */
 
 void
 snmp_example_init(void)
@@ -67,7 +67,9 @@ snmp_example_init(void)
   snmpv3_dummy_init();
 #endif
 
+#if SNMP_LWIP_MIB2
   snmp_set_mibs(mibs, LWIP_ARRAYSIZE(mibs));
+#endif
   snmp_init();
 
   snmp_trap_dst_ip_set(0, &netif_default->gw);

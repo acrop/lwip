@@ -69,7 +69,6 @@ set(LWIP_COMPILER_FLAGS_GNU_CLANG
 if (NOT LWIP_HAVE_MBEDTLS)
     list(APPEND LWIP_COMPILER_FLAGS_GNU_CLANG
         -Wredundant-decls
-        $<$<COMPILE_LANGUAGE:C>:-Wc++-compat>
     )
 endif()
 

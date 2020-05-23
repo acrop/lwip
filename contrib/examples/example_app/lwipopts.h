@@ -161,7 +161,7 @@ a lot of data that needs to be copied, this should be set high. */
 /* ---------- App timeout options -----*/
 
 /* The number of timeout used by mqtt app, 0 means disabled */
-#define APP_NUM_SYS_TIMEOUT_LWIP_MQTT        0 /* 3 */
+#define APP_NUM_SYS_TIMEOUT_LWIP_MQTT        3 /* 3 */
 /* The number of timeout used by the user */
 #define APP_NUM_SYS_TIMEOUT_USER             2
 /* APP_NUM_SYS_TIMEOUT_TOTAL the sigma of all enabled apps */

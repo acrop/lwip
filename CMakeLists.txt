@@ -7,7 +7,7 @@ project(lwIP)
 # Example lwIP application
 set(LWIP_DIR ${CMAKE_CURRENT_SOURCE_DIR})
 
-set (LWIP_DEFINITIONS LWIP_DEBUG=1)
+set (LWIP_DEFINITIONS LWIP_DEBUG=1 MQTT_PAL_CUSTOM_HEADER="mqtt_pal_custom.h")
 
 if (${CMAKE_SYSTEM_NAME} STREQUAL "Windows")
   add_subdirectory(${LWIP_DIR}/contrib/ports/win32/example_app)

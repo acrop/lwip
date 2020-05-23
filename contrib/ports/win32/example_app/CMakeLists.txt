@@ -5,6 +5,7 @@ set (LWIP_INCLUDE_DIRS
     "${LWIP_DIR}/contrib/"
     "${LWIP_DIR}/contrib/ports/win32/include"
     "${LWIP_DIR}/contrib/examples/example_app"
+    "${LWIP_DIR}/src/include/lwip/apps"
 )
 
 include(${LWIP_DIR}/src/Filelists.cmake)

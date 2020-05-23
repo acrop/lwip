@@ -39,7 +39,7 @@
 #define LWIP_NETBIOS_APP              0
 #define LWIP_NETIO_APP                0
 #define LWIP_MDNS_APP                 0
-#define LWIP_MQTT_APP                 0
+#define LWIP_MQTT_APP                 1
 #define LWIP_PING_APP                 0
 #define LWIP_RTP_APP                  0
 #define LWIP_SHELL_APP                0

@@ -70,7 +70,7 @@ static int deflate_level; /* default compression level, can be changed via comma
 #define USAGE_ARG_DEFLATE ""
 #endif /* MAKEFS_SUPPORT_DEFLATE */
 
-#ifdef WIN32
+#ifdef _WIN32
 
 #define GETCWD(path, len)             GetCurrentDirectoryA(len, path)
 #define GETCWD_SUCCEEDED(ret)         (ret != 0)

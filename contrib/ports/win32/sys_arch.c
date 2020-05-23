@@ -149,6 +149,8 @@ sys_now(void)
   return now;
 }
 
+#if SYS_LIGHTWEIGHT_PROT
+
 CRITICAL_SECTION critSec;
 #if LWIP_WIN32_SYS_ARCH_ENABLE_PROTECT_COUNTER
 static int protection_depth;
@@ -209,12 +211,16 @@ sys_arch_check_not_protected(void)
 #define sys_arch_check_not_protected()
 #endif
 
+#endif
+
 static void
 msvc_sys_init(void)
 {
   sys_win_rand_init();
   sys_init_timing();
+#if SYS_LIGHTWEIGHT_PROT
   InitSysArchProtect();
+#endif
   netconn_sem_tls_index = TlsAlloc();
   LWIP_ASSERT("TlsAlloc failed", netconn_sem_tls_index != TLS_OUT_OF_INDEXES);
 }
@@ -740,8 +746,6 @@ sys_arch_netconn_sem_free(void)
 }
 #endif /* LWIP_NETCONN_SEM_PER_THREAD */
 
-#endif /* !NO_SYS */
-
 /* get keyboard state to terminate the debug app on any kbhit event using win32 API */
 int
 lwip_win32_keypressed(void)
@@ -763,6 +767,8 @@ lwip_win32_keypressed(void)
   }
   return 0;
 }
+
+#endif /* !NO_SYS */
 
 #include <stdarg.h>
 

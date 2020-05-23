@@ -637,6 +637,10 @@ main_loop(void)
   volatile int callClosePpp = 0;
 #endif /* PPP_SUPPORT */
 
+#ifdef LWIP_MAIN_LOOP_INIT
+  LWIP_MAIN_LOOP_INIT();
+#endif
+
   /* initialize lwIP stack, network interfaces and applications */
 #if NO_SYS
   lwip_init();

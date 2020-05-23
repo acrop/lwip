@@ -50,7 +50,6 @@
 #define LWIP_ICMP                  LWIP_IPV4
 
 #define LWIP_SNMP                  LWIP_UDP
-#define MIB2_STATS                 LWIP_SNMP
 #ifdef LWIP_HAVE_MBEDTLS
 #define LWIP_SNMP_V3               (LWIP_SNMP)
 #endif
@@ -287,6 +286,7 @@ a lot of data that needs to be copied, this should be set high. */
 #define MEMP_STATS              1
 #define PBUF_STATS              1
 #define SYS_STATS               1
+#define MIB2_STATS              LWIP_SNMP
 #endif /* LWIP_STATS */
 
 /* ---------- NETBIOS options ---------- */

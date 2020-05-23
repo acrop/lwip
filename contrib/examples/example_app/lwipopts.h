@@ -36,6 +36,8 @@
 #include "lwipopts_test.h"
 #else /* LWIP_OPTTEST_FILE */
 
+#include "arch/lwipopts.h"
+
 #define LWIP_IPV4                  1
 #define LWIP_IPV6                  1
 

@@ -1,0 +1,5 @@
+
+#ifndef LWIP_ARCH_LWIPOPTS_H
+#define LWIP_ARCH_LWIPOPTS_H
+
+#endif /* LWIP_ARCH_SYS_ARCH_H */

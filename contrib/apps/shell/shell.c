@@ -50,11 +50,11 @@
 #include "lwip/if_api.h"
 #endif
 
-#ifdef WIN32
+#ifdef _WIN32
 #define NEWLINE "\r\n"
-#else /* WIN32 */
+#else /* _WIN32 */
 #define NEWLINE "\n"
-#endif /* WIN32 */
+#endif /* _WIN32 */
 
 /** Define this to 1 if you want to echo back all received characters
  * (e.g. so they are displayed on a remote telnet)

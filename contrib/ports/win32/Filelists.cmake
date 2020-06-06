@@ -15,8 +15,6 @@ endif()
 set(lwipcontribportwindows_SRCS
     ${LWIP_CONTRIB_DIR}/ports/win32/sys_arch.c
     ${LWIP_CONTRIB_DIR}/ports/win32/sio.c
-    ${LWIP_CONTRIB_DIR}/ports/win32/pcapif.c
-    ${LWIP_CONTRIB_DIR}/ports/win32/pcapif_helper.c
 )
 
 # pcapif needs WinPcap developer package: https://www.winpcap.org/devel.htm
@@ -24,17 +22,25 @@ if(NOT DEFINED WPDPACK_DIR)
     set(WPDPACK_DIR ${LWIP_DIR}/../WpdPack)
     message(STATUS "WPDPACK_DIR not set - using default location ${WPDPACK_DIR}")
 endif()
-if (${CMAKE_SYSTEM_NAME} STREQUAL "Windows")
-    if(CMAKE_SIZEOF_VOID_P EQUAL 8)
-        set(WPDPACK_LIB_DIR ${WPDPACK_DIR}/lib/x64)
-    else()
-        set(WPDPACK_LIB_DIR ${WPDPACK_DIR}/lib)
-    endif()
-    set(WPCAP  ${WPDPACK_DIR}/lib/x64/wpcap.lib)
-    set(PACKET ${WPDPACK_DIR}/lib/x64/packet.lib)
+if(CMAKE_SIZEOF_VOID_P EQUAL 8)
+    set(_LIB_SUBPATH lib/x64)
 else()
-    find_library(WPCAP  wpcap  HINTS ${WPDPACK_DIR}/lib/x64)
-    find_library(PACKET packet HINTS ${WPDPACK_DIR}/lib/x64)
+    set(_LIB_SUBPATH lib)
+endif()
+
+find_library(WPCAP  wpcap  HINTS ${WPDPACK_DIR}/${_LIB_SUBPATH})
+find_library(PACKET packet HINTS ${WPDPACK_DIR}/${_LIB_SUBPATH})
+if(NOT WPCAP OR NOT PACKET)
+    message(STATUS "WPCAP: ${WPCAP} or PACKET:${PACKET}, disable pcap netif")
+else()
+    list(APPEND LWIP_DEFINITIONS
+        WPCAP_ENABLED=1
+    )
+    list(APPEND lwipcontribportwindows_SRCS
+        ${LWIP_CONTRIB_DIR}/ports/win32/pcapif.c
+        ${LWIP_CONTRIB_DIR}/ports/win32/pcapif_helper.c
+    )
+    list(APPEND LWIP_MBEDTLS_LINK_LIBRARIES ${WPCAP} ${PACKET})
 endif()
 message(STATUS "WPCAP library: ${WPCAP}")
 message(STATUS "PACKET library: ${PACKET}")
@@ -43,4 +49,4 @@ add_library(lwipcontribportwindows EXCLUDE_FROM_ALL ${lwipcontribportwindows_SRC
 target_include_directories(lwipcontribportwindows PRIVATE ${LWIP_INCLUDE_DIRS} "${WPDPACK_DIR}/include" ${LWIP_MBEDTLS_INCLUDE_DIRS})
 target_compile_options(lwipcontribportwindows PRIVATE ${LWIP_COMPILER_FLAGS})
 target_compile_definitions(lwipcontribaddons PRIVATE ${LWIP_DEFINITIONS} ${LWIP_MBEDTLS_DEFINITIONS})
-target_link_libraries(lwipcontribportwindows PUBLIC ${WPCAP} ${PACKET} ${LWIP_MBEDTLS_LINK_LIBRARIES})
+target_link_libraries(lwipcontribportwindows PUBLIC ${LWIP_MBEDTLS_LINK_LIBRARIES})

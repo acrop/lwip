@@ -49,11 +49,13 @@ void init_default_netif(const ip4_addr_t *ipaddr, const ip4_addr_t *netmask, con
 void init_default_netif(void)
 #endif
 {
+#if defined(WPCAP_ENABLED)
 #if NO_SYS
   netif_add(&netif, NETIF_ADDRS NULL, pcapif_init, netif_input);
 #else  /* NO_SYS */
   netif_add(&netif, NETIF_ADDRS NULL, pcapif_init, tcpip_input);
 #endif /* NO_SYS */
+#endif
   netif_set_default(&netif);
 }
 
@@ -62,7 +64,9 @@ default_netif_poll(void)
 {
 #if !PCAPIF_RX_USE_THREAD
   /* check for packets and link status*/
+#if defined(WPCAP_ENABLED)
   pcapif_poll(&netif);
+#endif
   /* When pcapif_poll comes back, there are not packets, so sleep to
      prevent 100% CPU load. Don't do this in an embedded system since it
      increases latency! */
@@ -76,5 +80,7 @@ void
 default_netif_shutdown(void)
 {
   /* release the pcap library... */
+#if defined(WPCAP_ENABLED)
   pcapif_shutdown(&netif);
+#endif
 }

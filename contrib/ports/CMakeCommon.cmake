@@ -60,6 +60,7 @@ set(LWIP_COMPILER_FLAGS_GNU_CLANG
      $<$<COMPILE_LANGUAGE:C>:-Wnested-externs>
     -Wunreachable-code
     -Wuninitialized
+    -Wno-unused-parameter
     -Wmissing-prototypes
     -Waggregate-return
     -Wlogical-not-parentheses

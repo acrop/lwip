@@ -262,6 +262,9 @@ a lot of data that needs to be copied, this should be set high. */
 #define LWIP_UDPLITE            LWIP_UDP
 #define UDP_TTL                 255
 
+/* ---------- DNS options ---------- */
+
+#define DNS_MAX_NAME_LENGTH     64
 
 /* ---------- RAW options ---------- */
 #define LWIP_RAW                1

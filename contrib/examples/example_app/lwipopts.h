@@ -140,7 +140,7 @@ a lot of data that needs to be copied, this should be set high. */
 #define MEMP_NUM_TCP_SEG        16
 /* MEMP_NUM_SYS_TIMEOUT: the number of simulateously active
    timeouts. */
-#define MEMP_NUM_SYS_TIMEOUT    17
+#define MEMP_NUM_SYS_TIMEOUT    21
 
 /* The following four are used only with the sequential API and can be
    set to 0 if the application only will use the raw API. */
@@ -295,9 +295,6 @@ a lot of data that needs to be copied, this should be set high. */
 #define PPP_SUPPORT             1      /* Set > 0 for PPP */
 
 #if PPP_SUPPORT
-
-#define NUM_PPP                 1      /* Max PPP sessions. */
-
 
 /* Select modules to enable.  Ideally these would be set in the makefile but
  * we're limited by the command line length so you need to modify the settings

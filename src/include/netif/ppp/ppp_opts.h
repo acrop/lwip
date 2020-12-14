@@ -82,14 +82,6 @@
 #if PPP_SUPPORT
 
 /**
- * MEMP_NUM_PPP_PCB: the number of simultaneously active PPP
- * connections (requires the PPP_SUPPORT option)
- */
-#ifndef MEMP_NUM_PPP_PCB
-#define MEMP_NUM_PPP_PCB                1
-#endif
-
-/**
  * PPP_NUM_TIMEOUTS_PER_PCB: the number of sys_timeouts running in parallel per
  * ppp_pcb. See the detailed explanation at the end of ppp_impl.h about simultaneous
  * timers analysis.
@@ -98,15 +90,16 @@
 #define PPP_NUM_TIMEOUTS_PER_PCB        (2 + PPP_IPV4_SUPPORT + PPP_IPV6_SUPPORT + CCP_SUPPORT)
 #endif
 
-/* The number of sys_timeouts required for the PPP module */
-#define PPP_NUM_TIMEOUTS                (PPP_SUPPORT * PPP_NUM_TIMEOUTS_PER_PCB * MEMP_NUM_PPP_PCB)
-
 /**
  * MEMP_NUM_PPPOS_INTERFACES: the number of concurrently active PPPoS
  * interfaces (only used with PPPOS_SUPPORT==1)
  */
 #ifndef MEMP_NUM_PPPOS_INTERFACES
-#define MEMP_NUM_PPPOS_INTERFACES       MEMP_NUM_PPP_PCB
+#if PPPOS_SUPPORT
+#define MEMP_NUM_PPPOS_INTERFACES       1
+#else
+#define MEMP_NUM_PPPOS_INTERFACES       0
+#endif
 #endif
 
 /**
@@ -114,7 +107,11 @@
  * interfaces (only used with PPPOE_SUPPORT==1)
  */
 #ifndef MEMP_NUM_PPPOE_INTERFACES
+#if PPPOE_SUPPORT
 #define MEMP_NUM_PPPOE_INTERFACES       1
+#else
+#define MEMP_NUM_PPPOE_INTERFACES       0
+#endif
 #endif
 
 /**
@@ -122,7 +119,27 @@
  * interfaces (only used with PPPOL2TP_SUPPORT==1)
  */
 #ifndef MEMP_NUM_PPPOL2TP_INTERFACES
-#define MEMP_NUM_PPPOL2TP_INTERFACES       1
+#if PPPOL2TP_SUPPORT
+#define MEMP_NUM_PPPOL2TP_INTERFACES    1
+#else
+#define MEMP_NUM_PPPOL2TP_INTERFACES    0
+#endif
+#endif
+
+/**
+ * MEMP_NUM_PPP_PCB: the number of simultaneously active PPP
+ * connections (requires the PPP_SUPPORT option)
+ */
+#ifndef MEMP_NUM_PPP_PCB
+#define MEMP_NUM_PPP_PCB                (MEMP_NUM_PPPOS_INTERFACES + MEMP_NUM_PPPOE_INTERFACES + MEMP_NUM_PPPOL2TP_INTERFACES)
+#endif
+
+/* The number of sys_timeouts required for the PPP module */
+#define PPP_NUM_TIMEOUTS                (PPP_SUPPORT * PPP_NUM_TIMEOUTS_PER_PCB * MEMP_NUM_PPP_PCB)
+
+/* Max PPP sessions. */
+#ifndef NUM_PPP
+#define NUM_PPP                         MEMP_NUM_PPP_PCB
 #endif
 
 /**

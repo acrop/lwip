@@ -154,6 +154,14 @@ a lot of data that needs to be copied, this should be set high. */
 #define MEMP_NUM_TCPIP_MSG_API   16
 #define MEMP_NUM_TCPIP_MSG_INPKT 16
 
+/* ---------- App timeout options -----*/
+
+/* The number of timeout used by mqtt app, 0 means disabled */
+#define APP_NUM_SYS_TIMEOUT_LWIP_MQTT        0 /* 3 */
+/* The number of timeout used by the user */
+#define APP_NUM_SYS_TIMEOUT_USER             2
+/* APP_NUM_SYS_TIMEOUT_TOTAL the sigma of all enabled apps */
+#define APP_NUM_SYS_TIMEOUT_TOTAL            (APP_NUM_SYS_TIMEOUT_LWIP_MQTT + APP_NUM_SYS_TIMEOUT_USER)
 
 /* ---------- Pbuf options ---------- */
 /* PBUF_POOL_SIZE: the number of buffers in the pbuf pool. */

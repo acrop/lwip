@@ -3577,4 +3577,8 @@
  * @}
  */
 
+#define lwip_macro_str(s) lwip_macro_xstr(s)
+#define lwip_macro_xstr(s) lwip_macro_xxstr(s)
+#define lwip_macro_xxstr(s) #s
+
 #endif /* LWIP_HDR_OPT_H */

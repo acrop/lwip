@@ -126,8 +126,10 @@ PACK_STRUCT_END
 #error "If you want to use Sequential API, you have to define MEMP_NUM_TCPIP_MSG_API>=1 in your lwipopts.h"
 #endif
 /* There must be sufficient timeouts, taking into account requirements of the subsystems. */
-#if LWIP_TIMERS && (MEMP_NUM_SYS_TIMEOUT < LWIP_NUM_SYS_TIMEOUT_INTERNAL)
-#error "MEMP_NUM_SYS_TIMEOUT is too low to accommodate all required timeouts"
+#if LWIP_TIMERS && (MEMP_NUM_SYS_TIMEOUT < (LWIP_NUM_SYS_TIMEOUT_INTERNAL + APP_NUM_SYS_TIMEOUT_TOTAL))
+#pragma message("The value of MEMP_NUM_SYS_TIMEOUT are: " lwip_macro_str(MEMP_NUM_SYS_TIMEOUT))
+#pragma message("The value of (LWIP_NUM_SYS_TIMEOUT_INTERNAL + APP_NUM_SYS_TIMEOUT_TOTAL) are: " lwip_macro_str((LWIP_NUM_SYS_TIMEOUT_INTERNAL + APP_NUM_SYS_TIMEOUT_TOTAL)))
+#error "MEMP_NUM_SYS_TIMEOUT is less than (LWIP_NUM_SYS_TIMEOUT_INTERNAL + APP_NUM_SYS_TIMEOUT_TOTAL) to accommodate all required timeouts"
 #endif
 #if (IP_REASSEMBLY && (MEMP_NUM_REASSDATA > IP_REASS_MAX_PBUFS))
 #error "MEMP_NUM_REASSDATA > IP_REASS_MAX_PBUFS doesn't make sense since each struct ip_reassdata must hold 2 pbufs at least!"

@@ -307,7 +307,7 @@ a lot of data that needs to be copied, this should be set high. */
  * we're limited by the command line length so you need to modify the settings
  * in this file.
  */
-#define PPPOE_SUPPORT           1
+#define PPPOE_SUPPORT           0
 #define PPPOS_SUPPORT           1
 
 #define PAP_SUPPORT             1      /* Set > 0 for PAP. */

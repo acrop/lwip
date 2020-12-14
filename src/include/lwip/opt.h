@@ -1028,7 +1028,11 @@
   * LWIP_ACD==1: Enable ACD module. ACD module is needed when using AUTOIP.
   */
 #if !defined LWIP_ACD || defined __DOXYGEN__
-#define LWIP_ACD                     (LWIP_AUTOIP || LWIP_DHCP_DOES_ACD_CHECK)
+#if (LWIP_AUTOIP || LWIP_DHCP_DOES_ACD_CHECK)
+#define LWIP_ACD 1
+#else
+#define LWIP_ACD 0
+#endif
 #endif
 #if !LWIP_IPV4
 /* disable ACD when IPv4 is disabled */

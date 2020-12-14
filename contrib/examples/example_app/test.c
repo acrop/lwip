@@ -309,9 +309,11 @@ test_netif_init(void)
 #endif
 #endif /* USE_SLIPIF > 1 */
 #endif /* USE_SLIPIF */
+#if USE_ETHERNET_TCPIP
 #if USE_DHCP || USE_AUTOIP
   err_t err;
 #endif
+#endif /* USE_ETHERNET_TCPIP */
 
 #if PPP_SUPPORT
   const char *username = NULL, *password = NULL;
@@ -392,8 +394,8 @@ test_netif_init(void)
 #endif /* USE_DHCP */
 #else /* USE_ETHERNET_TCPIP */
   /* Use ethernet for PPPoE only */
-  netif.flags &= ~(NETIF_FLAG_ETHARP | NETIF_FLAG_IGMP); /* no ARP */
-  netif.flags |= NETIF_FLAG_ETHERNET; /* but pure ethernet */
+  netif_default->flags &= ~(NETIF_FLAG_ETHARP | NETIF_FLAG_IGMP); /* no ARP */
+  netif_default->flags |= NETIF_FLAG_ETHERNET; /* but pure ethernet */
 #endif /* USE_ETHERNET_TCPIP */
 
 #if PPP_SUPPORT && PPPOE_SUPPORT

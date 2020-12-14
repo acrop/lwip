@@ -4,7 +4,10 @@
     "files.insertFinalNewline": true,
     "files.trimFinalNewlines": true,
     "files.trimTrailingWhitespace": true,
-    "files.associations": {
-        "*.h": "c"
-    }
+    "C_Cpp.autoAddFileAssociations": false,
+    "C_Cpp.formatting": "clangFormat",
+    "C_Cpp.default.configurationProvider": "ms-vscode.cmake-tools",
+    "files.autoGuessEncoding": true,
+    "cmake.generator": "Ninja",
+    "cmake.buildDirectory": "${workspaceFolder}/build/${buildKitVendor}-${buildType}-${buildKitHostOs}-${buildKitTargetArch}"
 }

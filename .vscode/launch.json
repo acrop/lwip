@@ -5,15 +5,24 @@
     "version": "0.2.0",
     "configurations": [
         {
+            "name": "(msvc) Launch example_app",
+            "type": "cppvsdbg",
+            "request": "launch",
+            "args": [],
+            "stopAtEntry": false,
+            "program": "${workspaceFolder}/build/MSVC-Debug-win32-x64/contrib/ports/win32/example_app/example_app",
+            "cwd": "${workspaceFolder}/build/MSVC-Debug-win32-x64/contrib/ports/win32/example_app",
+            "environment": [],
+            "console": "externalTerminal"
+        },
+        {
             "name": "(gdb) Launch example_app",
             "type": "cppdbg",
             "request": "launch",
             "args": [],
             "stopAtEntry": true,
             "environment": [],
-            "externalConsole": true,
             "MIMode": "gdb",
-            "preLaunchTask": "Build example_app",
             "setupCommands": [
                 {
                     "description": "Enable pretty-printing for gdb",
@@ -21,13 +30,14 @@
                     "ignoreFailures": true
                 }
             ],
+            "program": "${workspaceFolder}/build/MSVC-Debug-win32-x64/contrib/ports/win32/example_app/example_app",
             "linux": {
-                "cwd": "${workspaceFolder}/build/contrib/ports/unix/example_app",
-                "program": "${workspaceFolder}/build/contrib/ports/unix/example_app/example_app",
+                "cwd": "${workspaceFolder}/build/MSVC-Debug-win32-x64/contrib/ports/unix/example_app",
+                "program": "${workspaceFolder}/build/MSVC-Debug-win32-x64/contrib/ports/unix/example_app/example_app",
             },
             "windows": {
-                "cwd": "${workspaceFolder}/build/contrib/ports/win32/example_app",
-                "program": "${workspaceFolder}/build/contrib/ports/win32/example_app/example_app",
+                "cwd": "${workspaceFolder}/build/MSVC-Debug-win32-x64/contrib/ports/win32/example_app",
+                "program": "${workspaceFolder}/build/MSVC-Debug-win32-x64/contrib/ports/win32/example_app/example_app",
             }
         },
         {
@@ -37,7 +47,6 @@
             "args": [],
             "stopAtEntry": true,
             "environment": [],
-            "externalConsole": false,
             "MIMode": "gdb",
             "preLaunchTask": "Build unit tests",
             "setupCommands": [
@@ -47,13 +56,14 @@
                     "ignoreFailures": true
                 }
             ],
+            "program": "${workspaceFolder}/MSVC-Debug-win32-x64/contrib/ports/win32/check/build/lwip_unittests",
             "linux": {
-                "cwd": "${workspaceFolder}/contrib/ports/unix/check/build",
-                "program": "${workspaceFolder}/contrib/ports/unix/check/build/lwip_unittests",
+                "cwd": "${workspaceFolder}/MSVC-Debug-win32-x64/contrib/ports/unix/check/build",
+                "program": "${workspaceFolder}/MSVC-Debug-win32-x64/contrib/ports/unix/check/build/lwip_unittests",
             },
             "windows": {
-                "cwd": "${workspaceFolder}/contrib/ports/win32/check/build",
-                "program": "${workspaceFolder}/contrib/ports/win32/check/build/lwip_unittests",
+                "cwd": "${workspaceFolder}/MSVC-Debug-win32-x64/contrib/ports/win32/check/build",
+                "program": "${workspaceFolder}/MSVC-Debug-win32-x64/contrib/ports/win32/check/build/lwip_unittests",
             }
         }
     ]

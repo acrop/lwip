@@ -172,7 +172,7 @@ struct netif slipif2;
 #endif /* USE_SLIPIF */
 
 
-#if PPP_SUPPORT
+#if PPP_SUPPORT && PPPOE_SUPPORT
 static void
 pppLinkStatusCallback(ppp_pcb *pcb, int errCode, void *ctx)
 {
@@ -262,6 +262,7 @@ ppp_output_cb(ppp_pcb *pcb, const void *data, u32_t len, void *ctx)
 #endif /* PPPOS_SUPPORT */
 #endif /* PPP_SUPPORT */
 
+#if USE_SLIPIF || USE_ETHERNET
 #if LWIP_NETIF_STATUS_CALLBACK
 static void
 status_callback(struct netif *state_netif)
@@ -289,6 +290,7 @@ link_callback(struct netif *state_netif)
   }
 }
 #endif /* LWIP_NETIF_LINK_CALLBACK */
+#endif
 
 /* This function initializes all network interfaces */
 static void
@@ -315,7 +317,7 @@ test_netif_init(void)
 #endif
 #endif /* USE_ETHERNET_TCPIP */
 
-#if PPP_SUPPORT
+#if PPP_SUPPORT && PPPOE_SUPPORT
   const char *username = NULL, *password = NULL;
 #ifdef PPP_USERNAME
   username = PPP_USERNAME;

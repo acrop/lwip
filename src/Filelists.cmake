@@ -41,6 +41,7 @@ set(lwipcore_SRCS
     ${LWIP_DIR}/src/core/dns.c
     ${LWIP_DIR}/src/core/inet_chksum.c
     ${LWIP_DIR}/src/core/ip.c
+    ${LWIP_DIR}/src/core/ip_addr.c
     ${LWIP_DIR}/src/core/mem.c
     ${LWIP_DIR}/src/core/memp.c
     ${LWIP_DIR}/src/core/netif.c

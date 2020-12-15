@@ -41,48 +41,10 @@
 #if LWIP_IPV4
 
 #include "lwip/ip_addr.h"
-#include "lwip/netif.h"
 
 /* used by IP4_ADDR_ANY and IP_ADDR_BROADCAST in ip_addr.h */
 const ip_addr_t ip_addr_any = IPADDR4_INIT(IPADDR_ANY);
 const ip_addr_t ip_addr_broadcast = IPADDR4_INIT(IPADDR_BROADCAST);
-
-/**
- * Determine if an address is a broadcast address on a network interface
- *
- * @param addr address to be checked
- * @param netif the network interface against which the address is checked
- * @return returns non-zero if the address is a broadcast address
- */
-u8_t
-ip4_addr_isbroadcast_u32(u32_t addr, const struct netif *netif)
-{
-  ip4_addr_t ipaddr;
-  ip4_addr_set_u32(&ipaddr, addr);
-
-  /* all ones (broadcast) or all zeroes (old skool broadcast) */
-  if ((~addr == IPADDR_ANY) ||
-      (addr == IPADDR_ANY)) {
-    return 1;
-    /* no broadcast support on this network interface? */
-  } else if ((netif->flags & NETIF_FLAG_BROADCAST) == 0) {
-    /* the given address cannot be a broadcast address
-     * nor can we check against any broadcast addresses */
-    return 0;
-    /* address matches network interface address exactly? => no broadcast */
-  } else if (addr == ip4_addr_get_u32(netif_ip4_addr(netif))) {
-    return 0;
-    /*  on the same (sub) network... */
-  } else if (ip4_addr_net_eq(&ipaddr, netif_ip4_addr(netif), netif_ip4_netmask(netif))
-             /* ...and host identifier bits are all ones? =>... */
-             && ((addr & ~ip4_addr_get_u32(netif_ip4_netmask(netif))) ==
-                 (IPADDR_BROADCAST & ~ip4_addr_get_u32(netif_ip4_netmask(netif))))) {
-    /* => network broadcast address */
-    return 1;
-  } else {
-    return 0;
-  }
-}
 
 /** Checks if a netmask is valid (starting with ones, then only zeros)
  *

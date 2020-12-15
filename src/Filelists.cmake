@@ -67,6 +67,7 @@ set(lwipcore4_SRCS
     ${LWIP_DIR}/src/core/ipv4/ip4_frag.c
     ${LWIP_DIR}/src/core/ipv4/ip4.c
     ${LWIP_DIR}/src/core/ipv4/ip4_addr.c
+    ${LWIP_DIR}/src/core/ipv4/ip4_addr_isbroadcast_u32.c
 )
 set(lwipcore6_SRCS
     ${LWIP_DIR}/src/core/ipv6/dhcp6.c

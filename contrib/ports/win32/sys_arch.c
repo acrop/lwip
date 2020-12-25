@@ -479,7 +479,7 @@ sys_thread_new(const char *name, lwip_thread_fn function, void *arg, int stacksi
 #if !NO_SYS
 #if LWIP_TCPIP_CORE_LOCKING
 
-static DWORD lwip_core_lock_holder_thread_id;
+static DWORD lwip_core_lock_holder_thread_id = 0;
 
 void
 sys_lock_tcpip_core(void)
@@ -496,7 +496,7 @@ sys_unlock_tcpip_core(void)
 }
 #endif /* LWIP_TCPIP_CORE_LOCKING */
 
-static DWORD lwip_tcpip_thread_id;
+static DWORD lwip_tcpip_thread_id = 0;
 
 void
 sys_mark_tcpip_thread(void)

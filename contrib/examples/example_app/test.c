@@ -95,16 +95,6 @@
 #endif /* NO_SYS */
 
 #include "netif/ppp/ppp_opts.h"
-#if PPP_SUPPORT
-/* PPP includes */
-#include "lwip/sio.h"
-#include "netif/ppp/pppapi.h"
-#include "netif/ppp/pppos.h"
-#include "netif/ppp/pppoe.h"
-#if !NO_SYS && !LWIP_PPP_API
-#error With NO_SYS==0, LWIP_PPP_API==1 is required.
-#endif
-#endif /* PPP_SUPPORT */
 
 /* include the port-dependent configuration */
 #include "lwipcfg.h"
@@ -155,112 +145,12 @@ struct dhcp netif_dhcp;
 struct autoip netif_autoip;
 #endif /* LWIP_AUTOIP */
 #endif /* USE_ETHERNET */
-#if PPP_SUPPORT
-/* THE PPP PCB */
-ppp_pcb *ppp;
-/* THE PPP interface */
-struct netif ppp_netif;
-/* THE PPP descriptor */
-u8_t sio_idx = 0;
-sio_fd_t ppp_sio;
-#endif /* PPP_SUPPORT */
 #if USE_SLIPIF
 struct netif slipif1;
 #if USE_SLIPIF > 1
 struct netif slipif2;
 #endif /* USE_SLIPIF > 1 */
 #endif /* USE_SLIPIF */
-
-
-#if PPP_SUPPORT && PPPOE_SUPPORT
-static void
-pppLinkStatusCallback(ppp_pcb *pcb, int errCode, void *ctx)
-{
-  struct netif *pppif = ppp_netif(pcb);
-  LWIP_UNUSED_ARG(ctx);
-
-  switch(errCode) {
-    case PPPERR_NONE: {             /* No error. */
-      printf("pppLinkStatusCallback: PPPERR_NONE\n");
-#if LWIP_IPV4
-      printf("   our_ipaddr  = %s\n", ip4addr_ntoa(netif_ip4_addr(pppif)));
-      printf("   his_ipaddr  = %s\n", ip4addr_ntoa(netif_ip4_gw(pppif)));
-      printf("   netmask     = %s\n", ip4addr_ntoa(netif_ip4_netmask(pppif)));
-#endif /* LWIP_IPV4 */
-#if LWIP_DNS
-      printf("   dns1        = %s\n", ipaddr_ntoa(dns_getserver(0)));
-      printf("   dns2        = %s\n", ipaddr_ntoa(dns_getserver(1)));
-#endif /* LWIP_DNS */
-#if PPP_IPV6_SUPPORT
-      printf("   our6_ipaddr = %s\n", ip6addr_ntoa(netif_ip6_addr(pppif, 0)));
-#endif /* PPP_IPV6_SUPPORT */
-      break;
-    }
-    case PPPERR_PARAM: {           /* Invalid parameter. */
-      printf("pppLinkStatusCallback: PPPERR_PARAM\n");
-      break;
-    }
-    case PPPERR_OPEN: {            /* Unable to open PPP session. */
-      printf("pppLinkStatusCallback: PPPERR_OPEN\n");
-      break;
-    }
-    case PPPERR_DEVICE: {          /* Invalid I/O device for PPP. */
-      printf("pppLinkStatusCallback: PPPERR_DEVICE\n");
-      break;
-    }
-    case PPPERR_ALLOC: {           /* Unable to allocate resources. */
-      printf("pppLinkStatusCallback: PPPERR_ALLOC\n");
-      break;
-    }
-    case PPPERR_USER: {            /* User interrupt. */
-      printf("pppLinkStatusCallback: PPPERR_USER\n");
-      break;
-    }
-    case PPPERR_CONNECT: {         /* Connection lost. */
-      printf("pppLinkStatusCallback: PPPERR_CONNECT\n");
-      break;
-    }
-    case PPPERR_AUTHFAIL: {        /* Failed authentication challenge. */
-      printf("pppLinkStatusCallback: PPPERR_AUTHFAIL\n");
-      break;
-    }
-    case PPPERR_PROTOCOL: {        /* Failed to meet protocol. */
-      printf("pppLinkStatusCallback: PPPERR_PROTOCOL\n");
-      break;
-    }
-    case PPPERR_PEERDEAD: {        /* Connection timeout */
-      printf("pppLinkStatusCallback: PPPERR_PEERDEAD\n");
-      break;
-    }
-    case PPPERR_IDLETIMEOUT: {     /* Idle Timeout */
-      printf("pppLinkStatusCallback: PPPERR_IDLETIMEOUT\n");
-      break;
-    }
-    case PPPERR_CONNECTTIME: {     /* Max connect time reached */
-      printf("pppLinkStatusCallback: PPPERR_CONNECTTIME\n");
-      break;
-    }
-    case PPPERR_LOOPBACK: {        /* Loopback detected */
-      printf("pppLinkStatusCallback: PPPERR_LOOPBACK\n");
-      break;
-    }
-    default: {
-      printf("pppLinkStatusCallback: unknown errCode %d\n", errCode);
-      break;
-    }
-  }
-}
-
-#if PPPOS_SUPPORT
-static u32_t
-ppp_output_cb(ppp_pcb *pcb, const void *data, u32_t len, void *ctx)
-{
-  LWIP_UNUSED_ARG(pcb);
-  LWIP_UNUSED_ARG(ctx);
-  return sio_write(ppp_sio, (const u8_t*)data, len);
-}
-#endif /* PPPOS_SUPPORT */
-#endif /* PPP_SUPPORT */
 
 #if USE_SLIPIF || USE_ETHERNET
 #if LWIP_NETIF_STATUS_CALLBACK
@@ -316,31 +206,6 @@ test_netif_init(void)
   err_t err;
 #endif
 #endif /* USE_ETHERNET_TCPIP */
-
-#if PPP_SUPPORT && PPPOE_SUPPORT
-  const char *username = NULL, *password = NULL;
-#ifdef PPP_USERNAME
-  username = PPP_USERNAME;
-#endif
-#ifdef PPP_PASSWORD
-  password = PPP_PASSWORD;
-#endif
-  printf("ppp_connect: COM%d\n", (int)sio_idx);
-#if PPPOS_SUPPORT
-  ppp_sio = sio_open(sio_idx);
-  if (ppp_sio == NULL) {
-    printf("sio_open error\n");
-  } else {
-    ppp = pppos_create(&ppp_netif, ppp_output_cb, pppLinkStatusCallback, NULL);
-    if (ppp == NULL) {
-      printf("pppos_create error\n");
-    } else {
-      ppp_set_auth(ppp, PPPAUTHTYPE_ANY, username, password);
-      ppp_connect(ppp, 0);
-    }
-  }
-#endif /* PPPOS_SUPPORT */
-#endif  /* PPP_SUPPORT */
 
 #if USE_ETHERNET
 #if LWIP_IPV4
@@ -399,17 +264,6 @@ test_netif_init(void)
   netif_default->flags &= ~(NETIF_FLAG_ETHARP | NETIF_FLAG_IGMP); /* no ARP */
   netif_default->flags |= NETIF_FLAG_ETHERNET; /* but pure ethernet */
 #endif /* USE_ETHERNET_TCPIP */
-
-#if PPP_SUPPORT && PPPOE_SUPPORT
-  /* start PPPoE after ethernet netif is added! */
-  ppp = pppoe_create(&ppp_netif, netif_default, NULL, NULL, pppLinkStatusCallback, NULL);
-  if (ppp == NULL) {
-    printf("pppoe_create error\n");
-  } else {
-    ppp_set_auth(ppp, PPPAUTHTYPE_ANY, username, password);
-    ppp_connect(ppp, 0);
-  }
-#endif /* PPP_SUPPORT && PPPOE_SUPPORT */
 
 #endif /* USE_ETHERNET */
 #if USE_SLIPIF
@@ -633,13 +487,6 @@ main_loop(void)
   err_t err;
   sys_sem_t init_sem;
 #endif /* NO_SYS */
-#if PPP_SUPPORT
-#if !USE_ETHERNET
-  int count;
-  u8_t rxbuf[1024];
-#endif
-  volatile int callClosePpp = 0;
-#endif /* PPP_SUPPORT */
 
 #ifdef LWIP_MAIN_LOOP_INIT
   LWIP_MAIN_LOOP_INIT();
@@ -673,16 +520,6 @@ main_loop(void)
 
 #if USE_ETHERNET
     default_netif_poll();
-#else /* USE_ETHERNET */
-    /* try to read characters from serial line and pass them to PPPoS */
-    count = sio_read(ppp_sio, (u8_t*)rxbuf, 1024);
-    if(count > 0) {
-      pppos_input(ppp, rxbuf, count);
-    } else {
-      /* nothing received, give other tasks a chance to run */
-      sys_msleep(1);
-    }
-
 #endif /* USE_ETHERNET */
 #if USE_SLIPIF
     slipif_poll(&slipif1);
@@ -694,49 +531,8 @@ main_loop(void)
     /* check for loopback packets on all netifs */
     netif_poll_all();
 #endif /* ENABLE_LOOPBACK && !LWIP_NETIF_LOOPBACK_MULTITHREADING */
-#if PPP_SUPPORT
-    {
-    int do_hup = 0;
-    if(do_hup) {
-      ppp_close(ppp, 1);
-      do_hup = 0;
-    }
-    }
-    if(callClosePpp && ppp) {
-      /* make sure to disconnect PPP before stopping the program... */
-      callClosePpp = 0;
-#if NO_SYS
-      ppp_close(ppp, 0);
-#else
-      pppapi_close(ppp, 0);
-#endif
-      ppp = NULL;
-    }
-#endif /* PPP_SUPPORT */
   }
 
-#if PPP_SUPPORT
-    if(ppp) {
-      u32_t started;
-      printf("Closing PPP connection...\n");
-      /* make sure to disconnect PPP before stopping the program... */
-#if NO_SYS
-      ppp_close(ppp, 0);
-#else
-      pppapi_close(ppp, 0);
-#endif
-      ppp = NULL;
-      /* Wait for some time to let PPP finish... */
-      started = sys_now();
-      do
-      {
-#if USE_ETHERNET
-        default_netif_poll();
-#endif
-        /* @todo: need a better check here: only wait until PPP is down */
-      } while(sys_now() - started < 5000);
-    }
-#endif /* PPP_SUPPORT */
 #if (LWIP_SOCKET || LWIP_NETCONN) && LWIP_NETCONN_SEM_PER_THREAD
   netconn_thread_cleanup();
 #endif
@@ -745,18 +541,8 @@ main_loop(void)
 #endif /* USE_ETHERNET */
 }
 
-#if PPP_SUPPORT && PPPOS_SUPPORT
-int main(int argc, char **argv)
-#else /* PPP_SUPPORT && PPPOS_SUPPORT */
 int main(void)
-#endif /* PPP_SUPPORT && PPPOS_SUPPORT */
 {
-#if PPP_SUPPORT && PPPOS_SUPPORT
-  if(argc > 1) {
-    sio_idx = (u8_t)atoi(argv[1]);
-  }
-  printf("Using serial port %d for PPP\n", sio_idx);
-#endif /* PPP_SUPPORT && PPPOS_SUPPORT */
   /* no stdio-buffering, please! */
   setvbuf(stdout, NULL,_IONBF, 0);
 

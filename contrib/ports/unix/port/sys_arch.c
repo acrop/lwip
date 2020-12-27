@@ -55,6 +55,7 @@
 #include <unistd.h>
 #include <pthread.h>
 #include <errno.h>
+#include <stdio.h>
 
 #include "lwip/def.h"
 
@@ -67,6 +68,11 @@
 #include "lwip/opt.h"
 #include "lwip/stats.h"
 #include "lwip/tcpip.h"
+
+void lwip_vprintf(unsigned tag, const char *fmt, va_list ap)
+{
+  vprintf(fmt, ap);
+}
 
 /* Return code for an interrupted timed wait */
 #define SYS_ARCH_INTR 0xfffffffeUL

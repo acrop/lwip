@@ -121,7 +121,7 @@
 
 /* MEM_SIZE: the size of the heap memory. If the application will send
 a lot of data that needs to be copied, this should be set high. */
-#define MEM_SIZE                102400
+#define MEM_SIZE                5120
 
 /* MEMP_NUM_PBUF: the number of memp struct pbufs. If the application
    sends a lot of data out of ROM (or other static memory), this
@@ -169,7 +169,7 @@ a lot of data that needs to be copied, this should be set high. */
 
 /* ---------- Pbuf options ---------- */
 /* PBUF_POOL_SIZE: the number of buffers in the pbuf pool. */
-#define PBUF_POOL_SIZE          256
+#define PBUF_POOL_SIZE          30
 
 /* PBUF_POOL_BUFSIZE: the size of each pbuf in the pbuf pool. */
 #define PBUF_POOL_BUFSIZE       256
@@ -213,7 +213,7 @@ a lot of data that needs to be copied, this should be set high. */
 #define TCP_SNDLOWAT           (TCP_SND_BUF/2)
 
 /* TCP receive window. */
-#define TCP_WND                 (20 * TCP_MSS)
+#define TCP_WND                 (2 * TCP_MSS)
 
 /* Maximum number of retransmissions of data segments. */
 #define TCP_MAXRTX              12

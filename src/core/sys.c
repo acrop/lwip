@@ -123,6 +123,22 @@
 /* Most of the functions defined in sys.h must be implemented in the
  * architecture-dependent file sys_arch.c */
 
+void lwip_printf(unsigned tag, const char *fmt, ...)
+{
+  va_list ap;
+  va_start(ap, fmt);
+  lwip_vprintf(tag, fmt, ap);
+  va_end(ap);
+}
+
+void lwip_printf_diag(const char *fmt, ...)
+{
+  va_list ap;
+  va_start(ap, fmt);
+  lwip_vprintf(LWIP_LOG_TAG_NONE | LWIP_LOG_LEVEL_INFO, fmt, ap);
+  va_end(ap);
+}
+
 #if !NO_SYS
 
 #ifndef sys_msleep

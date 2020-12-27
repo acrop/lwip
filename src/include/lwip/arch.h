@@ -45,6 +45,8 @@
 #define BIG_ENDIAN 4321
 #endif
 
+#include <stdarg.h>
+
 #include "arch/cc.h"
 
 /**
@@ -72,26 +74,46 @@
 #define LWIP_RAND() ((u32_t)rand())
 #endif
 
+/**
+ * trace level, larger value is less important
+ */
+enum {
+  LWIP_LOG_LEVEL_NEVER,  /* only used in control, for not to output trace */
+  LWIP_LOG_LEVEL_ERROR,  /* error  */
+  LWIP_LOG_LEVEL_WARN,   /* warning  */
+  LWIP_LOG_LEVEL_INFO,   /* information  */
+  LWIP_LOG_LEVEL_DEBUG,  /* for debug  */
+  LWIP_LOG_LEVEL_VERBOSE /* verbose  */
+};
+
+/**
+ * macro for trace tag
+ */
+#define LWIP_MAKE_LOG_TAG(a, b, c, d) ((unsigned)((a)&0x7f) | ((unsigned)((b)&0x7f) << 7) | ((unsigned)((c)&0x7f) << 14) | ((unsigned)((d)&0x7f) << 21))
+#define LWIP_LOG_TAG_NONE LWIP_MAKE_LOG_TAG(' ', ' ', ' ', ' ')
+
+void lwip_vprintf(unsigned tag, const char *fmt, va_list ap);
+void lwip_printf(unsigned tag, const char *fmt, ...);
+void lwip_printf_diag(const char *fmt, ...);
+
 /** Platform specific diagnostic output.<br>
- * Note the default implementation pulls in printf, which may
+ * Note the default implementation pulls in lwip_printf_diag, which may
  * in turn pull in a lot of standard library code. In resource-constrained
  * systems, this should be defined to something less resource-consuming.
  */
 #ifndef LWIP_PLATFORM_DIAG
-#define LWIP_PLATFORM_DIAG(x) do {printf x;} while(0)
-#include <stdio.h>
+#define LWIP_PLATFORM_DIAG(x) do {lwip_printf_diag x;} while(0)
 #include <stdlib.h>
 #endif
 
 /** Platform specific assertion handling.<br>
- * Note the default implementation pulls in printf, fflush and abort, which may
+ * Note the default implementation pulls in lwip_printf_diag and abort, which may
  * in turn pull in a lot of standard library code. In resource-constrained
  * systems, this should be defined to something less resource-consuming.
  */
 #ifndef LWIP_PLATFORM_ASSERT
-#define LWIP_PLATFORM_ASSERT(x) do {printf("Assertion \"%s\" failed at line %d in %s\n", \
-                                     x, __LINE__, __FILE__); fflush(NULL); abort();} while(0)
-#include <stdio.h>
+#define LWIP_PLATFORM_ASSERT(x) do {lwip_printf_diag("Assertion \"%s\" failed at line %d in %s\n", \
+                                     x, __LINE__, __FILE__); abort();} while(0)
 #include <stdlib.h>
 #endif
 

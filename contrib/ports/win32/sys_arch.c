@@ -70,6 +70,11 @@
 
 #define LWIP_WIN32_SYS_ARCH_ENABLE_PROTECT_COUNTER (LWIP_SYS_ARCH_CHECK_NESTED_PROTECT || LWIP_SYS_ARCH_CHECK_SCHEDULING_UNPROTECTED)
 
+void lwip_vprintf(unsigned tag, const char *fmt, va_list ap)
+{
+  vprintf(fmt, ap);
+}
+
 /* These functions are used from NO_SYS also, for precise timer triggering */
 static LARGE_INTEGER freq, sys_start_time;
 #define SYS_INITIALIZED() (freq.QuadPart != 0)

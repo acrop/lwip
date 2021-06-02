@@ -233,7 +233,10 @@ msvc_sys_init(void)
 void
 sys_init(void)
 {
-  msvc_sys_init();
+  if (!SYS_INITIALIZED())
+  {
+    msvc_sys_init();
+  }
 }
 
 #if !NO_SYS

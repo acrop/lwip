@@ -80,7 +80,7 @@
 #ifdef LWIP_DEBUG
 
 #define LWIP_DBG_MIN_LEVEL         0
-#define PPP_DEBUG                  LWIP_DBG_OFF
+#define PPP_DEBUG                  LWIP_DBG_ON
 #define MEM_DEBUG                  LWIP_DBG_OFF
 #define MEMP_DEBUG                 LWIP_DBG_OFF
 #define PBUF_DEBUG                 LWIP_DBG_OFF

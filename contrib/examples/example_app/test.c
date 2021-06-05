@@ -151,8 +151,7 @@ static struct autoip netif_autoip;
 static ppp_pcb *ppp;
 /* THE PPP interface */
 static struct netif ppp_netif;
-/* THE PPP descriptor */
-static u8_t sio_idx = 0;
+static sio_open_option_t sio_open_option;
 static sio_fd_t ppp_sio;
 #endif /* PPP_SUPPORT */
 
@@ -298,9 +297,9 @@ test_netif_init(void)
 #ifdef PPP_PASSWORD
   password = PPP_PASSWORD;
 #endif
-  printf("ppp_connect: COM%d\n", (int)sio_idx);
+  printf("ppp_connect: COM%d\n", (int)sio_open_option.devnum);
 #if PPPOS_SUPPORT
-  ppp_sio = sio_open(sio_idx);
+  ppp_sio = sio_open(sio_open_option.devnum, sio_open_option.baud_rate);
   if (ppp_sio == NULL) {
     printf("sio_open error\n");
   } else {
@@ -653,16 +652,20 @@ main_loop(void)
 }
 
 #if PPP_SUPPORT && PPPOS_SUPPORT
+#define PPPOS_SIO_DEVNUM -1
 int main(int argc, char **argv)
 #else /* PPP_SUPPORT && PPPOS_SUPPORT */
 int main(void)
 #endif /* PPP_SUPPORT && PPPOS_SUPPORT */
 {
 #if PPP_SUPPORT && PPPOS_SUPPORT
+  sio_open_option.baud_rate = 115200;
   if(argc > 1) {
-    sio_idx = (u8_t)atoi(argv[1]);
+    sio_open_option.devnum = (u8_t)atoi(argv[1]);
+  } else {
+    sio_open_option.devnum = PPPOS_SIO_DEVNUM;
   }
-  printf("Using serial port %d for PPP\n", sio_idx);
+  printf("Using serial port %d for PPP\n", sio_open_option.devnum);
 #endif /* PPP_SUPPORT && PPPOS_SUPPORT */
   /* no stdio-buffering, please! */
   setvbuf(stdout, NULL,_IONBF, 0);

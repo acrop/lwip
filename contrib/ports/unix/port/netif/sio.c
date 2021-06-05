@@ -112,7 +112,7 @@ static void signal_handler_IO_1( int status )
 * @param siostat status
 * @return file handle to serial dev.
 */
-static int sio_init( char * device, int devnum, sio_status_t * siostat )
+static int sio_init( char * device, int devnum, int baud_rate, sio_status_t * siostat )
 {
 	struct termios oldtio,newtio;
 #if ! (PPP_SUPPORT || LWIP_HAVE_SLIPIF)
@@ -175,7 +175,26 @@ static int sio_init( char * device, int devnum, sio_status_t * siostat )
 	tcgetattr( fd,&oldtio ); /* save current port settings */
 	/* set new port settings */
 	/* see 'man termios' for further settings */
-        memset(&newtio, 0, sizeof(newtio));
+  memset(&newtio, 0, sizeof(newtio));
+	switch (baud_rate)
+	{
+	case 38400:
+			baud_rate = B38400;
+			break;
+
+	case 115200:
+			baud_rate = B115200;
+			break;
+	case 2400:
+			baud_rate = B2400;
+			break;
+	case 9600:
+	default:
+			baud_rate = B9600;
+			break;
+	}
+	cfsetispeed(&newtio, (speed_t)baud_rate);
+	cfsetospeed(&newtio, (speed_t)baud_rate);
 	newtio.c_cflag = BAUDRATE | CS8 | CLOCAL | CREAD | CRTSCTS;
 	newtio.c_iflag = 0;
 	newtio.c_oflag = 0;
@@ -306,6 +325,21 @@ u32_t sio_write(sio_status_t * siostat, const u8_t *buf, u32_t size)
     return wsz < 0 ? 0 : wsz;
 }
 
+/**
+ * Tries to read from the serial device. Same as sio_read but returns
+ * immediately if no data is available and never blocks.
+ *
+ * @param fd serial device handle
+ * @param data pointer to data buffer for receiving
+ * @param len maximum length (in bytes) of data to receive
+ * @return number of bytes actually received
+ */
+u32_t sio_tryread(sio_status_t * siostat, u8_t *buf, u32_t size)
+{
+	ssize_t rsz = read( siostat->fd, buf, size );
+	return rsz < 0 ? 0 : rsz;
+}
+
 u32_t sio_read(sio_status_t * siostat, u8_t *buf, u32_t size)
 {
     ssize_t rsz = read( siostat->fd, buf, size );
@@ -319,7 +353,7 @@ void sio_read_abort(sio_status_t * siostat)
 }
 #endif /* (PPP_SUPPORT || LWIP_HAVE_SLIPIF) */
 
-sio_fd_t sio_open(u8_t devnum)
+sio_fd_t sio_open(u8_t devnum, u32_t baud_rate)
 {
 	char dev[20];
 
@@ -345,7 +379,7 @@ sio_fd_t sio_open(u8_t devnum)
 
 	if ( (devnum == 1) || (devnum == 0) )
 	{
-		if ( ( siostate->fd = sio_init( dev, devnum, siostate ) ) == 0 )
+		if ( ( siostate->fd = sio_init( dev, devnum, baud_rate, siostate ) ) == 0 )
 		{
 			LWIP_DEBUGF(SIO_DEBUG, ("sio_open: ERROR opening serial device dev=%s\n", dev));
 			abort( );
@@ -482,4 +516,14 @@ void sio_change_baud( sioBaudrates baud, sio_status_t * siostat )
 					siostat->fd, baud));
 			break;
 	}
+}
+
+u8_t sio_reconnected(sio_fd_t _fd)
+{
+  if (_fd->reconnected)
+  {
+    _fd->reconnected = 0;
+    return 1;
+  }
+  return 0;
 }

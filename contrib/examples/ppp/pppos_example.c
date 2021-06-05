@@ -182,14 +182,10 @@ netif_status_callback(struct netif *nif)
 #endif /* LWIP_NETIF_STATUS_CALLBACK */
 #endif
 
-void pppos_example_init(void)
+void pppos_example_init(sio_open_option_t *opt)
 {
 #if PPPOS_SUPPORT
-#if PPP_PTY_TEST
-  ppp_sio = sio_open(2);
-#else
-  ppp_sio = sio_open(0);
-#endif
+  ppp_sio = sio_open(opt->devnum, opt->baud_rate);
   if (!ppp_sio) {
     lwip_printfe("PPPOS example: Error opening device");
     return;

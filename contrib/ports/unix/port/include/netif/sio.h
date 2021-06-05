@@ -9,6 +9,7 @@
 struct sio_status_s {
 	int fd;
 	fifo_t myfifo;
+	u8_t reconnected;
 };
 
 /* BAUDRATE is defined in sio.c as it is implementation specific */

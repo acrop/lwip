@@ -30,11 +30,15 @@
 #ifndef PPPOS_EXAMPLE_H
 #define PPPOS_EXAMPLE_H
 
+#include "lwip/sio.h"
+
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-void pppos_example_init(void);
+#if PPPOS_SUPPORT
+void pppos_example_init(sio_open_option_t *sio_open_option, u8_t set_as_default);
+#endif
 
 #ifdef __cplusplus
 }

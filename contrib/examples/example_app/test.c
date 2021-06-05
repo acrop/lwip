@@ -85,6 +85,7 @@
 #include "examples/httpd/fs_example/fs_example.h"
 #include "examples/httpd/https_example/https_example.h"
 #include "examples/httpd/ssi_example/ssi_example.h"
+#include "examples/ppp/pppos_example.h"
 
 #include "default_netif.h"
 
@@ -361,6 +362,10 @@ apps_init(void)
 #endif
 }
 
+#if PPPOS_SUPPORT
+static sio_open_option_t sio_open_option;
+#endif
+
 /* This function initializes this lwIP test. When NO_SYS=1, this is done in
  * the main_loop context (there is no other one), when NO_SYS=0, this is done
  * in the tcpip_thread context */
@@ -380,6 +385,10 @@ test_init(void * arg)
 
   /* init network interfaces */
   test_netif_init();
+
+#if PPPOS_SUPPORT
+  pppos_example_init(&sio_open_option, 1);
+#endif
 
   /* init apps */
   apps_init();
@@ -448,8 +457,22 @@ main_loop(void)
 #endif /* USE_ETHERNET */
 }
 
+#if PPPOS_SUPPORT
+#define PPPOS_SIO_DEVNUM -1
+int main(int argc, char **argv)
+#else /* PPPOS_SUPPORT */
 int main(void)
+#endif /* PPPOS_SUPPORT */
 {
+#if PPPOS_SUPPORT
+  sio_open_option.baud_rate = 115200;
+  if(argc > 1) {
+    sio_open_option.devnum = (u8_t)atoi(argv[1]);
+  } else {
+    sio_open_option.devnum = PPPOS_SIO_DEVNUM;
+  }
+  printf("Using serial port %d for PPP\n", sio_open_option.devnum);
+#endif /* PPPOS_SUPPORT */
   /* no stdio-buffering, please! */
   setvbuf(stdout, NULL,_IONBF, 0);
 

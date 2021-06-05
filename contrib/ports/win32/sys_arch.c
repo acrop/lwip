@@ -768,7 +768,7 @@ lwip_win32_keypressed(void)
       if (rec.Event.KeyEvent.bKeyDown) {
         /* not a special key? */
         if (rec.Event.KeyEvent.uChar.AsciiChar != 0) {
-          return 1;
+          return 0;
         }
       }
     }

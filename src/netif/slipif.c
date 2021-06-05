@@ -353,21 +353,21 @@ slipif_loop_thread(void *nf)
  *         ERR_MEM if no memory could be allocated,
  *         ERR_IF is serial line couldn't be opened
  *
- * @note If netif->state is interpreted as an u8_t serial port number.
+ * @note If netif->state is interpreted as an sio_open_option_t serial port option.
  *
  */
 err_t
 slipif_init(struct netif *netif)
 {
   struct slipif_priv *priv;
-  u8_t sio_num;
+  sio_open_option_t *sio_open_option;
 
   LWIP_ASSERT("slipif needs an input callback", netif->input != NULL);
 
   /* netif->state contains serial port number */
-  sio_num = LWIP_PTR_NUMERIC_CAST(u8_t, netif->state);
+  sio_open_option = (sio_open_option_t*)(netif->state);
 
-  LWIP_DEBUGF(SLIP_DEBUG, ("slipif_init: netif->num=%"U16_F"\n", (u16_t)sio_num));
+  LWIP_DEBUGF(SLIP_DEBUG, ("slipif_init: netif->num=%"U16_F"\n", (u16_t)sio_open_option->devnum));
 
   /* Allocate private data */
   priv = (struct slipif_priv *)mem_malloc(sizeof(struct slipif_priv));
@@ -386,7 +386,7 @@ slipif_init(struct netif *netif)
   netif->mtu = SLIP_MAX_SIZE;
 
   /* Try to open the serial port. */
-  priv->sd = sio_open(sio_num);
+  priv->sd = sio_open(sio_open_option->devnum, sio_open_option->baud_rate);
   if (!priv->sd) {
     /* Opening the serial port failed. */
     mem_free(priv);

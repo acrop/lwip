@@ -39,10 +39,21 @@
 #pragma warning (push, 3)
 #endif
 #include <windows.h>
+#include <setupapi.h>
 #ifdef _MSC_VER
 #pragma warning (pop)
 #endif
 #include "lwipcfg.h"
+
+#pragma comment( lib, "setupapi" )
+
+typedef struct sio_win32_fd {
+  HANDLE handle;
+  u8_t orig_devnum;
+  u8_t devnum;
+  u32_t baud_rate;
+  u8_t reconnected;
+} sio_win32_fd_t;
 
 /** When 1, use COM ports, when 0, use named pipes (for simulation). */
 #ifndef SIO_USE_COMPORT
@@ -57,9 +68,6 @@
 #endif
 
 #if SIO_USE_COMPORT
-#ifndef SIO_COMPORT_SPEED
-#define SIO_COMPORT_SPEED 115200
-#endif
 #ifndef SIO_COMPORT_BYTESIZE
 #define SIO_COMPORT_BYTESIZE 8
 #endif
@@ -89,7 +97,7 @@ static int sio_abort = 0;
  * serial line settings (baudrate etc.)
  */
 static BOOL
-sio_setup(HANDLE fd)
+sio_setup(HANDLE fd, u32_t baud_rate)
 {
   COMMTIMEOUTS cto;
   DCB dcb;
@@ -101,7 +109,7 @@ sio_setup(HANDLE fd)
     return FALSE;
   }
   /* Set the new data */
-  dcb.BaudRate = SIO_COMPORT_SPEED;
+  dcb.BaudRate = baud_rate;
   dcb.ByteSize = SIO_COMPORT_BYTESIZE;
   dcb.StopBits = 0; /* ONESTOPBIT */
   dcb.Parity   = 0; /* NOPARITY */
@@ -113,15 +121,17 @@ sio_setup(HANDLE fd)
   dcb.fInX = dcb.fOutX = 0;
   dcb.XonChar = dcb.XoffChar = 0;
   dcb.XonLim = dcb.XoffLim = 100;*/
-
   /* Set the new DCB structure */
   if (!SetCommState(fd, &dcb)) {
     return FALSE;
   }
 
+  if (!SetupComm(fd, 8192, 8192)) {
+    return FALSE;
+  }
+
   memset(&cto, 0, sizeof(cto));
-  if(!GetCommTimeouts(fd, &cto))
-  {
+  if(!GetCommTimeouts(fd, &cto)) {
     return FALSE;
   }
   /* change read timeout, leave write timeout as it is */
@@ -131,10 +141,299 @@ sio_setup(HANDLE fd)
   if(!SetCommTimeouts(fd, &cto)) {
     return FALSE;
   }
-
   return TRUE;
 }
 #endif /* SIO_USE_COMPORT */
+
+BOOL RegQueryValueString(HKEY kKey, wchar_t* lpValueName, wchar_t** pszValueOut)
+{
+  wchar_t* pszValue= NULL;
+
+  //First query for the size of the registry value
+  DWORD dwType = 0;
+  DWORD dwDataSize = 0;
+  LONG nError = RegQueryValueExW(kKey, lpValueName, NULL, &dwType, NULL, &dwDataSize);
+
+  //Initialize the output parameter
+  *pszValueOut = NULL;
+  if (nError != ERROR_SUCCESS)
+  {
+    SetLastError(nError);
+    return FALSE;
+  }
+
+  //Ensure the value is a string
+  if (dwType != REG_SZ)
+  {
+    SetLastError(ERROR_INVALID_DATA);
+    return FALSE;
+  }
+
+  //Allocate enough bytes for the return value
+  DWORD dwAllocatedSize = dwDataSize + sizeof(wchar_t); //+sizeof(TCHAR) is to allow us to NULL terminate the data if it is not null terminated in the registry
+  pszValue = (wchar_t*)(LocalAlloc(LMEM_FIXED, dwAllocatedSize));
+  if (pszValue == NULL)
+    return FALSE;
+
+  //Recall RegQueryValueEx to return the data
+  pszValue[0] = L'\0';
+  DWORD dwReturnedSize = dwAllocatedSize;
+  nError = RegQueryValueExW(kKey, lpValueName, NULL, &dwType, (LPBYTE)(pszValue), &dwReturnedSize);
+  if (nError != ERROR_SUCCESS)
+  {
+    LocalFree(pszValue);
+    pszValue = NULL;
+    SetLastError(nError);
+    return FALSE;
+  }
+
+  //Handle the case where the data just returned is the same size as the allocated size. This could occur where the data
+  //has been updated in the registry with a non null terminator between the two calls to ReqQueryValueEx above. Rather than
+  //return a potentially non-null terminated block of data, just fail the method call
+  if (dwReturnedSize >= dwAllocatedSize)
+  {
+    SetLastError(ERROR_INVALID_DATA);
+    return FALSE;
+  }
+
+  //NULL terminate the data if it was not returned NULL terminated because it is not stored null terminated in the registry
+  if (pszValue[dwReturnedSize/sizeof(wchar_t) - 1] != L'\0')
+  {
+    pszValue[dwReturnedSize/sizeof(wchar_t)] = L'\0';
+  }
+
+  *pszValueOut = pszValue;
+  return TRUE;
+}
+
+BOOL IsNumeric(LPCWSTR pszString, BOOL bIgnoreColon)
+{
+  size_t nLen = wcslen(pszString);
+  if (nLen == 0)
+    return FALSE;
+
+  //What will be the return value from this function (assume the best)
+  BOOL bNumeric = TRUE;
+
+  for (size_t i=0; i<nLen && bNumeric; i++)
+  {
+    bNumeric = (iswdigit(pszString[i]) != 0);
+    if (bIgnoreColon && (pszString[i] == L':'))
+      bNumeric = TRUE;
+  }
+
+  return bNumeric;
+}
+
+BOOL QueryRegistryPortName(HKEY deviceKey, int *nPort)
+{
+  //What will be the return value from the method (assume the worst)
+  BOOL bAdded = FALSE;
+
+  //Read in the name of the port
+  wchar_t *sPortName = NULL;
+  if (RegQueryValueString(deviceKey, L"PortName", &sPortName))
+  {
+    //If it looks like "COMX" then
+    //add it to the array which will be returned
+    const size_t nLen = wcslen(sPortName);
+    if (nLen > 3)
+    {
+      if ((wcsnicmp(sPortName, L"COM", 3) == 0) && IsNumeric((sPortName + 3), FALSE))
+      {
+        //Work out the port number
+        *nPort = _wtoi(sPortName + 3);
+        bAdded = TRUE;
+      }
+    }
+  }
+  if (sPortName != NULL) {
+    LocalFree(sPortName);
+  }
+
+  return bAdded;
+}
+
+BOOL QueryDeviceDescription(_In_ HDEVINFO hDevInfoSet, _In_ SP_DEVINFO_DATA *devInfo, _Inout_ wchar_t** sFriendlyName)
+{
+  DWORD dwType = 0;
+  DWORD dwDataSize = 0;
+  wchar_t *friendlyName = NULL;
+  *sFriendlyName = NULL;
+  //Query initially to get the buffer size required
+  if (!SetupDiGetDeviceRegistryPropertyW(hDevInfoSet, devInfo, SPDRP_DEVICEDESC, &dwType, NULL, 0, &dwDataSize))
+  {
+    if (GetLastError() != ERROR_INSUFFICIENT_BUFFER)
+      return FALSE;
+  }
+
+  DWORD dwAllocatedSize = dwDataSize + sizeof(wchar_t); //+sizeof(wchar_t) is to allow us to NULL terminate the data if it is not null terminated in the registry
+  friendlyName = (wchar_t*)(LocalAlloc(LMEM_FIXED, dwAllocatedSize));
+
+  if (!SetupDiGetDeviceRegistryPropertyW(hDevInfoSet, devInfo, SPDRP_DEVICEDESC, &dwType, (PBYTE)friendlyName, dwDataSize, &dwDataSize)) {
+    LocalFree(friendlyName);
+    return FALSE;
+  }
+  if (dwType != REG_SZ)
+  {
+    LocalFree(friendlyName);
+    SetLastError(ERROR_INVALID_DATA);
+    return FALSE;
+  }
+  *sFriendlyName = friendlyName;
+  return TRUE;
+}
+
+// , _Inout_ CPortAndNamesArray& ports
+BOOL QueryUsingSetupAPI(const GUID guid, _In_ DWORD dwFlags, wchar_t **ports, int portsCount)
+{
+  memset(ports, 0, portsCount * sizeof(ports[0]));
+  //Create a "device information set" for the specified GUID
+  HDEVINFO hDevInfoSet = SetupDiGetClassDevsW(&guid, NULL, NULL, dwFlags);
+  if (hDevInfoSet == INVALID_HANDLE_VALUE)
+    return FALSE;
+
+  //Finally do the enumeration
+  BOOL bMoreItems = TRUE;
+  int nIndex = 0;
+  SP_DEVINFO_DATA devInfo;
+  while (bMoreItems)
+  {
+    //Enumerate the current device
+    devInfo.cbSize = sizeof(SP_DEVINFO_DATA);
+    bMoreItems = SetupDiEnumDeviceInfo(hDevInfoSet, nIndex, &devInfo);
+    if (bMoreItems)
+    {
+      //Did we find a serial port for this device
+      BOOL bAdded = FALSE;
+      int nPort = -1;
+
+      //Get the registry key which stores the ports settings
+      // ATL::CRegKey deviceKey;
+      HKEY deviceKey = SetupDiOpenDevRegKey(hDevInfoSet, &devInfo, DICS_FLAG_GLOBAL, 0, DIREG_DEV, KEY_QUERY_VALUE);
+      if (deviceKey != INVALID_HANDLE_VALUE)
+      {
+        if (QueryRegistryPortName(deviceKey, &nPort))
+        {
+          bAdded = TRUE;
+        }
+      }
+      //If the port was a serial port, then also try to get its friendly name
+      if (bAdded && nPort >= 0 && nPort < portsCount)
+      {
+        wchar_t *friendlyName = NULL;
+        if (QueryDeviceDescription(hDevInfoSet, &devInfo, &friendlyName)) {
+          ports[nPort] = friendlyName;
+        }
+      }
+    }
+
+    ++nIndex;
+  }
+
+  //Free up the "device information set" now that we are finished with it
+  SetupDiDestroyDeviceInfoList(hDevInfoSet);
+
+  //Return the success indicator
+  return TRUE;
+}
+
+static wchar_t *ports[256];
+static BOOL sio_open_win32(sio_win32_fd_t *fd)
+{
+  CHAR fileName[256];
+  if (fd == NULL) {
+    goto error;
+  }
+  LWIP_DEBUGF(SIO_DEBUG, ("sio_open(%lu)\n", (DWORD)fd->devnum));
+  fd->orig_devnum = fd->devnum;
+  if ((int8_t)fd->devnum < 0) {
+    int8_t special_devnum = -((int8_t)fd->devnum);
+    // scan the serials by name for special devnum
+    QueryUsingSetupAPI(GUID_DEVINTERFACE_COMPORT, DIGCF_PRESENT | DIGCF_DEVICEINTERFACE, ports, sizeof(ports) / sizeof(ports[0]));
+    for (size_t i = 0; i < sizeof(ports) / sizeof(ports[0]); ++i)
+    {
+      wchar_t *port = ports[i];
+      if (port) {
+        switch(special_devnum) {
+          case 1: {
+            // ур "Unisoc Usb Serial Port 0"
+            wchar_t unisoc_usb_serial_0[] = L"Unisoc Usb Serial Port 0";
+            if (wcscmp(port, unisoc_usb_serial_0) == 0) {
+              fd->devnum = (uint8_t)i;
+            }
+            break;
+          }
+
+          case 2: {
+            // ур "Unisoc Usb Serial Port 5"
+            wchar_t unisoc_usb_serial_5[] = L"Unisoc Usb Serial Port 5";
+            if (wcscmp(port, unisoc_usb_serial_5) == 0) {
+              fd->devnum = (uint8_t)i;
+            }
+            break;
+          }
+        }
+        LocalFree(ports[i]);
+      }
+    }
+  }
+
+  memset(fileName, 0, sizeof(fileName));
+#if SIO_USE_COMPORT
+  snprintf(fileName, 255, SIO_DEVICENAME"%lu", (DWORD)(fd->devnum));
+#else /* SIO_USE_COMPORT */
+  snprintf(fileName, 255, SIO_DEVICENAME"%lu", (DWORD)(fd->devnum & ~1));
+  if ((fd->devnum & 1) == 0) {
+    fd->handle = CreateNamedPipeA(fileName, PIPE_ACCESS_DUPLEX, PIPE_TYPE_BYTE | PIPE_NOWAIT,
+      PIPE_UNLIMITED_INSTANCES, 102400, 102400, 100, NULL);
+  } else
+#endif /* SIO_USE_COMPORT */
+  {
+    fd->handle = CreateFileA(fileName, GENERIC_READ | GENERIC_WRITE, 0, NULL, OPEN_EXISTING, 0, NULL);
+  }
+  if (fd->handle != INVALID_HANDLE_VALUE) {
+#if !SIO_USE_COMPORT
+    if (fd->devnum & 1) {
+      DWORD mode = PIPE_NOWAIT;
+      if (!SetNamedPipeHandleState(fd->handle, &mode, NULL, NULL)) {
+        goto error;
+      }
+    } else
+#endif /* !SIO_USE_COMPORT */
+    {
+      FlushFileBuffers(fd->handle);
+    }
+#if SIO_USE_COMPORT
+    if(!sio_setup(fd->handle, fd->baud_rate)) {
+      CloseHandle(fd->handle);
+      goto error;
+    }
+#endif /* SIO_USE_COMPORT */
+    LWIP_DEBUGF(SIO_DEBUG, ("sio_open(%lu) successfully opened.\n", (DWORD)fd->devnum));
+  }
+  return TRUE;
+
+error:
+  LWIP_DEBUGF(SIO_DEBUG, ("sio_open(%lu) failed. GetLastError() returns %lu\n",
+              (DWORD)fd->devnum, GetLastError()));
+  return FALSE;
+}
+
+static BOOL sio_reopen_win32(sio_win32_fd_t *fd)
+{
+  if (fd->handle != INVALID_HANDLE_VALUE)
+  {
+    fd->handle = INVALID_HANDLE_VALUE;
+    CloseHandle(fd->handle);
+  }
+  if (sio_open_win32(fd)) {
+    fd->reconnected = 1;
+    return TRUE;
+  }
+  return FALSE;
+}
+
 
 /**
  * Opens a serial device for communication.
@@ -142,54 +441,23 @@ sio_setup(HANDLE fd)
  * @param devnum device number
  * @return handle to serial device if successful, NULL otherwise
  */
-sio_fd_t sio_open(u8_t devnum)
+sio_fd_t sio_open(u8_t devnum, u32_t baud_rate)
 {
-  HANDLE fileHandle = INVALID_HANDLE_VALUE;
-  CHAR   fileName[256];
-  LWIP_DEBUGF(SIO_DEBUG, ("sio_open(%lu)\n", (DWORD)devnum));
-#if SIO_USE_COMPORT
-  snprintf(fileName, 255, SIO_DEVICENAME"%lu", (DWORD)(devnum));
-#else /* SIO_USE_COMPORT */
-  snprintf(fileName, 255, SIO_DEVICENAME"%lu", (DWORD)(devnum & ~1));
-  if ((devnum & 1) == 0) {
-    fileHandle = CreateNamedPipeA(fileName, PIPE_ACCESS_DUPLEX, PIPE_TYPE_BYTE | PIPE_NOWAIT,
-      PIPE_UNLIMITED_INSTANCES, 102400, 102400, 100, NULL);
-  } else
-#endif /* SIO_USE_COMPORT */
+  sio_win32_fd_t *fd = (sio_win32_fd_t *)malloc(sizeof(sio_win32_fd_t));
+  if (fd == NULL)
   {
-    fileHandle = CreateFileA(fileName, GENERIC_READ | GENERIC_WRITE, 0, NULL, OPEN_EXISTING, 0, NULL);
+    return (sio_fd_t)fd;
   }
-  if (fileHandle != INVALID_HANDLE_VALUE) {
-    sio_abort = 0;
-#if !SIO_USE_COMPORT
-    if (devnum & 1) {
-      DWORD mode = PIPE_NOWAIT;
-      if (!SetNamedPipeHandleState(fileHandle, &mode, NULL, NULL)) {
-        LWIP_DEBUGF(SIO_DEBUG, ("sio_open(%lu): SetNamedPipeHandleState failed. GetLastError() returns %d\n",
-                  (DWORD)devnum, GetLastError()));
-      }
-    } else
-#endif /* !SIO_USE_COMPORT */
-    {
-      FlushFileBuffers(fileHandle);
-    }
-#if SIO_USE_COMPORT
-    if(!sio_setup(fileHandle)) {
-      CloseHandle(fileHandle);
-      LWIP_DEBUGF(SIO_DEBUG, ("sio_open(%lu): sio_setup failed. GetLastError() returns %lu\n",
-                  (DWORD)devnum, GetLastError()));
-      return NULL;
-    }
-#endif /* SIO_USE_COMPORT */
-    LWIP_DEBUGF(SIO_DEBUG, ("sio_open: file \"%s\" successfully opened.\n", fileName));
-    printf("sio_open: file \"%s\" (%d) successfully opened: 0x%08x\n", fileName, devnum, LWIP_PTR_NUMERIC_CAST(unsigned int, fileHandle));
-    return (sio_fd_t)(fileHandle);
+  fd->handle = INVALID_HANDLE_VALUE;
+  fd->devnum = devnum;
+  fd->baud_rate = baud_rate;
+  fd->reconnected = 0;
+  if (!sio_open_win32(fd))
+  {
+    free(fd);
+    return NULL;
   }
-  LWIP_DEBUGF(SIO_DEBUG, ("sio_open(%lu) failed. GetLastError() returns %lu\n",
-              (DWORD)devnum, GetLastError()));
-  printf("sio_open(%lu) failed. GetLastError() returns %lu\n",
-              (DWORD)devnum, GetLastError());
-  return NULL;
+  return fd;
 }
 
 /**
@@ -200,29 +468,13 @@ sio_fd_t sio_open(u8_t devnum)
  *
  * @note This function will block until the character can be sent.
  */
-void sio_send(u8_t c, sio_fd_t fd)
+void sio_send(u8_t c, sio_fd_t _fd)
 {
+  sio_win32_fd_t *fd = (sio_win32_fd_t *)(_fd);
   DWORD dwNbBytesWritten = 0;
   LWIP_DEBUGF(SIO_DEBUG, ("sio_send(%lu)\n", (DWORD)c));
-  while ((!WriteFile((HANDLE)(fd), &c, 1, &dwNbBytesWritten, NULL)) || (dwNbBytesWritten < 1)) {
+  while ((!WriteFile(fd->handle, &c, 1, &dwNbBytesWritten, NULL)) || (dwNbBytesWritten < 1)) {
   }
-}
-
-/**
- * Receives a single character from the serial device.
- *
- * @param fd serial device handle
- *
- * @note This function will block until a character is received.
- */
-u8_t sio_recv(sio_fd_t fd)
-{
-  DWORD dwNbBytesReadden = 0;
-  u8_t byte = 0;
-  LWIP_DEBUGF(SIO_DEBUG, ("sio_recv()\n"));
-  while ((sio_abort == 0) && ((!ReadFile((HANDLE)(fd), &byte, 1, &dwNbBytesReadden, NULL)) || (dwNbBytesReadden < 1)));
-  LWIP_DEBUGF(SIO_DEBUG, ("sio_recv()=%lu\n", (DWORD)byte));
-  return byte;
 }
 
 /**
@@ -236,12 +488,13 @@ u8_t sio_recv(sio_fd_t fd)
  * @note This function will block until data can be received. The blocking
  * can be cancelled by calling sio_read_abort().
  */
-u32_t sio_read(sio_fd_t fd, u8_t* data, u32_t len)
+u32_t sio_read(sio_fd_t _fd, u8_t* data, u32_t len)
 {
+  sio_win32_fd_t *fd = (sio_win32_fd_t *)(_fd);
   BOOL ret;
   DWORD dwNbBytesReadden = 0;
   LWIP_DEBUGF(SIO_DEBUG, ("sio_read()...\n"));
-  ret = ReadFile((HANDLE)(fd), data, len, &dwNbBytesReadden, NULL);
+  ret = ReadFile(fd->handle, data, len, &dwNbBytesReadden, NULL);
   LWIP_DEBUGF(SIO_DEBUG, ("sio_read()=%lu bytes -> %d\n", dwNbBytesReadden, ret));
   LWIP_UNUSED_ARG(ret);
   return dwNbBytesReadden;
@@ -256,15 +509,18 @@ u32_t sio_read(sio_fd_t fd, u8_t* data, u32_t len)
  * @param len maximum length (in bytes) of data to receive
  * @return number of bytes actually received
  */
-u32_t sio_tryread(sio_fd_t fd, u8_t* data, u32_t len)
+u32_t sio_tryread(sio_fd_t _fd, u8_t* data, u32_t len)
 {
+  sio_win32_fd_t *fd = (sio_win32_fd_t *)(_fd);
   /* @todo: implement non-blocking read */
   BOOL ret;
   DWORD dwNbBytesReadden = 0;
   LWIP_DEBUGF(SIO_DEBUG, ("sio_read()...\n"));
-  ret = ReadFile((HANDLE)(fd), data, len, &dwNbBytesReadden, NULL);
+  ret = ReadFile(fd->handle, data, len, &dwNbBytesReadden, NULL);
   LWIP_DEBUGF(SIO_DEBUG, ("sio_read()=%lu bytes -> %d\n", dwNbBytesReadden, ret));
-  LWIP_UNUSED_ARG(ret);
+  if (!ret) {
+    while (!sio_reopen_win32(fd));
+  }
   return dwNbBytesReadden;
 }
 
@@ -278,15 +534,23 @@ u32_t sio_tryread(sio_fd_t fd, u8_t* data, u32_t len)
  *
  * @note This function will block until all data can be sent.
  */
-u32_t sio_write(sio_fd_t fd, const u8_t* data, u32_t len)
+u32_t sio_write(sio_fd_t _fd, const u8_t* data, u32_t len)
 {
-  BOOL ret;
-  DWORD dwNbBytesWritten = 0;
+  sio_win32_fd_t *fd = (sio_win32_fd_t *)(_fd);
+  DWORD dwNbBytesRemain = len;
   LWIP_DEBUGF(SIO_DEBUG, ("sio_write()...\n"));
-  ret = WriteFile((HANDLE)(fd), data, len, &dwNbBytesWritten, NULL);
-  LWIP_DEBUGF(SIO_DEBUG, ("sio_write()=%lu bytes -> %d\n", dwNbBytesWritten, ret));
-  LWIP_UNUSED_ARG(ret);
-  return dwNbBytesWritten;
+  while (dwNbBytesRemain > 0)
+  {
+    DWORD dwNbBytesWritten = 0;
+    BOOL ret = WriteFile(fd->handle, data + (len - dwNbBytesRemain), dwNbBytesRemain, &dwNbBytesWritten, NULL);
+    if (!ret) {
+      while (!sio_reopen_win32(fd));
+      break;
+    }
+    dwNbBytesRemain -= dwNbBytesWritten;
+    LWIP_DEBUGF(SIO_DEBUG, ("sio_write()=%lu bytes -> %d\n", dwNbBytesWritten, ret));
+  }
+  return len - dwNbBytesRemain;
 }
 
 /**
@@ -295,10 +559,21 @@ u32_t sio_write(sio_fd_t fd, const u8_t* data, u32_t len)
  *
  * @param fd serial device handle
  */
-void sio_read_abort(sio_fd_t fd)
+void sio_read_abort(sio_fd_t _fd)
 {
-  LWIP_UNUSED_ARG(fd);
+  LWIP_UNUSED_ARG(_fd);
   LWIP_DEBUGF(SIO_DEBUG, ("sio_read_abort() !!!!!...\n"));
   sio_abort = 1;
   return;
+}
+
+u8_t sio_reconnected(sio_fd_t _fd)
+{
+  sio_win32_fd_t *fd = (sio_win32_fd_t *)(_fd);
+  if (fd->reconnected)
+  {
+    fd->reconnected = 0;
+    return 1;
+  }
+  return 0;
 }

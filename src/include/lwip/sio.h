@@ -48,6 +48,12 @@ extern "C" {
 typedef void * sio_fd_t;
 #endif
 
+typedef struct sio_open_option sio_open_option_t;
+struct sio_open_option {
+  u8_t devnum;
+  u32_t baud_rate;
+};
+
 /* The following functions can be defined to something else in your cc.h file
    or be implemented in your custom sio.c file. */
 
@@ -58,7 +64,7 @@ typedef void * sio_fd_t;
  * @param devnum device number
  * @return handle to serial device if successful, NULL otherwise
  */
-sio_fd_t sio_open(u8_t devnum);
+sio_fd_t sio_open(u8_t devnum, u32_t baud_rate);
 #endif
 
 #ifndef sio_send
@@ -133,6 +139,15 @@ u32_t sio_write(sio_fd_t fd, const u8_t *data, u32_t len);
  * @param fd serial device handle
  */
 void sio_read_abort(sio_fd_t fd);
+#endif
+
+#ifndef sio_reconnected
+/**
+ * Get and clear reconnected flag
+ *
+ * @param fd serial device handle
+ */
+u8_t sio_reconnected(sio_fd_t fd);
 #endif
 
 #ifdef __cplusplus

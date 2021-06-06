@@ -518,7 +518,10 @@ static void pppos_state_interval(void *arg)
     sys_timeout(0, pppos_state_interval, arg);
     break;
   case PPPOS_CHATSCRIPT_START_ATE0:
-    pppos_command_run(
+#if PPP_DEBUG == LWIP_DBG_ON
+        sys_msleep(500);
+#endif
+        pppos_command_run(
         modem,
         pppos_state_interval,
         "ATE0\r\n",

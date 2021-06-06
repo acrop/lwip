@@ -101,6 +101,7 @@ sio_setup(HANDLE fd, u32_t baud_rate)
 {
   COMMTIMEOUTS cto;
   DCB dcb;
+  COMMPROP props;
 
   /* set up baudrate and other communication settings */
   memset(&dcb, 0, sizeof(dcb));
@@ -125,6 +126,9 @@ sio_setup(HANDLE fd, u32_t baud_rate)
   if (!SetCommState(fd, &dcb)) {
     return FALSE;
   }
+  if (!GetCommState(fd, &dcb)) {
+    return FALSE;
+  }
 
   if (!SetupComm(fd, 8192, 8192)) {
     return FALSE;
@@ -139,6 +143,10 @@ sio_setup(HANDLE fd, u32_t baud_rate)
   cto.ReadTotalTimeoutMultiplier = 0;
   cto.ReadTotalTimeoutConstant = 1; /* 1 ms */
   if(!SetCommTimeouts(fd, &cto)) {
+    return FALSE;
+  }
+
+  if (!GetCommProperties(fd, &props)) {
     return FALSE;
   }
   return TRUE;

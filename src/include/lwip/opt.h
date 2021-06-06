@@ -1883,7 +1883,7 @@
  * to sys_mbox_new() when the recvmbox is created.
  */
 #if !defined DEFAULT_RAW_RECVMBOX_SIZE || defined __DOXYGEN__
-#define DEFAULT_RAW_RECVMBOX_SIZE       0
+#define DEFAULT_RAW_RECVMBOX_SIZE       TCPIP_MBOX_SIZE
 #endif
 
 /**
@@ -1892,7 +1892,7 @@
  * to sys_mbox_new() when the recvmbox is created.
  */
 #if !defined DEFAULT_UDP_RECVMBOX_SIZE || defined __DOXYGEN__
-#define DEFAULT_UDP_RECVMBOX_SIZE       0
+#define DEFAULT_UDP_RECVMBOX_SIZE       TCPIP_MBOX_SIZE
 #endif
 
 /**
@@ -1901,7 +1901,7 @@
  * to sys_mbox_new() when the recvmbox is created.
  */
 #if !defined DEFAULT_TCP_RECVMBOX_SIZE || defined __DOXYGEN__
-#define DEFAULT_TCP_RECVMBOX_SIZE       0
+#define DEFAULT_TCP_RECVMBOX_SIZE       TCPIP_MBOX_SIZE
 #endif
 
 /**
@@ -1910,7 +1910,7 @@
  * sys_mbox_new() when the acceptmbox is created.
  */
 #if !defined DEFAULT_ACCEPTMBOX_SIZE || defined __DOXYGEN__
-#define DEFAULT_ACCEPTMBOX_SIZE         0
+#define DEFAULT_ACCEPTMBOX_SIZE         TCPIP_MBOX_SIZE
 #endif
 /**
  * @}

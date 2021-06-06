@@ -61,7 +61,7 @@ static const int err_to_errno_table[] = {
   -1,            /* ERR_IF         -12     Low-level netif error    */
   ECONNABORTED,  /* ERR_ABRT       -13     Connection aborted.      */
   ECONNRESET,    /* ERR_RST        -14     Connection reset.        */
-  ENOTCONN,      /* ERR_CLSD       -15     Connection closed.       */
+  ECONNABORTED,  /* ERR_CLSD       -15     Connection closed.       */
   EIO            /* ERR_ARG        -16     Illegal argument.        */
 };
 

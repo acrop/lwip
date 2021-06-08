@@ -368,10 +368,14 @@ static BOOL sio_open_win32(sio_win32_fd_t *fd)
             // ур "Unisoc Usb Serial Port 0"
             wchar_t unisoc_usb_serial_0[] = L"Unisoc Usb Serial Port 0";
             wchar_t luat_usb_device_1_at[] = L"LUAT USB Device 1 AT";
+            wchar_t quectel_modem[] = L"Quectel Modem";
             if (wcscmp(port, unisoc_usb_serial_0) == 0) {
               fd->devnum = (uint8_t)i;
             }
             if (wcscmp(port, luat_usb_device_1_at) == 0) {
+              fd->devnum = (uint8_t)i;
+            }
+            if (wcscmp(port, quectel_modem) == 0) {
               fd->devnum = (uint8_t)i;
             }
             break;

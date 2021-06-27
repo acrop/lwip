@@ -67,6 +67,7 @@ enum PPPOS_ChatscriptState {
   PPPOS_CHATSCRIPT_AT_MODE_POST_WAIT,
   PPPOS_CHATSCRIPT_START_ATE0,
   PPPOS_CHATSCRIPT_START_CFUN,
+  PPPOS_CHATSCRIPT_START_CGACT,
   PPPOS_CHATSCRIPT_START_CGDCONT,
   PPPOS_CHATSCRIPT_START_CGDCONT_QUERY,
   PPPOS_CHATSCRIPT_START_CREG_QUERY,
@@ -540,9 +541,22 @@ static void pppos_state_interval(void *arg)
         NULL,
         1,
         500,
-        PPPOS_CHATSCRIPT_START_CREG_QUERY,
+        PPPOS_CHATSCRIPT_START_CGACT,
         PPPOS_CHATSCRIPT_START_ATE0);
     break;
+  case PPPOS_CHATSCRIPT_START_CGACT:
+    pppos_command_run(
+        modem,
+        pppos_state_interval,
+        "AT+CGACT=1\r\n",
+        "OK\r\n",
+        NULL,
+        1,
+        500,
+        PPPOS_CHATSCRIPT_START_CREG_QUERY,
+        PPPOS_CHATSCRIPT_START_CREG_QUERY);
+    break;
+
   case PPPOS_CHATSCRIPT_START_CREG_QUERY:
       pppos_command_run_with_check(
         modem,

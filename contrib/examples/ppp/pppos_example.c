@@ -67,6 +67,7 @@ enum PPPOS_ChatscriptState {
   PPPOS_CHATSCRIPT_AT_MODE_POST_WAIT,
   PPPOS_CHATSCRIPT_START_ATE0,
   PPPOS_CHATSCRIPT_START_CFUN,
+  PPPOS_CHATSCRIPT_START_CGACT_CLEAR,
   PPPOS_CHATSCRIPT_START_CGACT,
   PPPOS_CHATSCRIPT_START_CGDCONT,
   PPPOS_CHATSCRIPT_START_CGDCONT_QUERY,
@@ -514,8 +515,20 @@ static void pppos_state_interval(void *arg)
     sys_timeout(1200, pppos_state_interval, arg);
     break;
   case PPPOS_CHATSCRIPT_AT_MODE_POST_WAIT:
-    modem->state = PPPOS_CHATSCRIPT_START_ATE0;
+    modem->state = PPPOS_CHATSCRIPT_START_CGACT_CLEAR;
     sys_timeout(0, pppos_state_interval, arg);
+    break;
+  case PPPOS_CHATSCRIPT_START_CGACT_CLEAR:
+    pppos_command_run(
+        modem,
+        pppos_state_interval,
+        "AT+CGACT=0\r\n",
+        "OK\r\n",
+        NULL,
+        1,
+        500,
+        PPPOS_CHATSCRIPT_START_ATE0,
+        PPPOS_CHATSCRIPT_START_ATE0);
     break;
   case PPPOS_CHATSCRIPT_START_ATE0:
 #if PPP_DEBUG == LWIP_DBG_ON
@@ -552,7 +565,7 @@ static void pppos_state_interval(void *arg)
         "OK\r\n",
         NULL,
         1,
-        500,
+        5000,
         PPPOS_CHATSCRIPT_START_CREG_QUERY,
         PPPOS_CHATSCRIPT_START_CREG_QUERY);
     break;
@@ -659,7 +672,7 @@ void pppos_example_init(
   const char *username = NULL, *password = NULL;
   ip_addr_t dns_ip1;
   ip_addr_t dns_ip2;
-  ipaddr_aton("223.5.5.5", &dns_ip1);
+  ipaddr_aton("114.114.114.114", &dns_ip1);
   ipaddr_aton("180.76.76.76", &dns_ip2);
   dns_setserver(0, &dns_ip1);
   dns_setserver(1, &dns_ip2);

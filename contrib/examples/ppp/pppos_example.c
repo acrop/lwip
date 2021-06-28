@@ -515,20 +515,8 @@ static void pppos_state_interval(void *arg)
     sys_timeout(1200, pppos_state_interval, arg);
     break;
   case PPPOS_CHATSCRIPT_AT_MODE_POST_WAIT:
-    modem->state = PPPOS_CHATSCRIPT_START_CGACT_CLEAR;
+    modem->state = PPPOS_CHATSCRIPT_START_ATE0;
     sys_timeout(0, pppos_state_interval, arg);
-    break;
-  case PPPOS_CHATSCRIPT_START_CGACT_CLEAR:
-    pppos_command_run(
-        modem,
-        pppos_state_interval,
-        "AT+CGACT=0\r\n",
-        "OK\r\n",
-        NULL,
-        1,
-        500,
-        PPPOS_CHATSCRIPT_START_ATE0,
-        PPPOS_CHATSCRIPT_START_ATE0);
     break;
   case PPPOS_CHATSCRIPT_START_ATE0:
 #if PPP_DEBUG == LWIP_DBG_ON
@@ -561,11 +549,29 @@ static void pppos_state_interval(void *arg)
     pppos_command_run(
         modem,
         pppos_state_interval,
-        "AT+CGACT=1\r\n",
+        /* CMCC */
+        "AT+CSQ\r\n",
+
+#if 0
+typedef enum
+{
+    COPS_MODE_AUTOMATIC = 0,
+    COPS_MODE_MANUAL = 1,
+    COPS_MODE_DEREGISTER = 2,
+    COPS_MODE_SET_ONLY = 3,
+    COPS_MODE_MANUAL_AUTOMATIC = 4,
+    COPS_MODE_UNDEFINED = 5,
+} AT_COPS_MODE;
+        "AT+COPS=?\r\n",
+        /* "AT+COPS=4,2,\"46000\",7\r\n", */
+        /* AT+COPS=4,2,"46011",7 */
+        "AT+COPS=?\r\n",
+        "AT+COPS=1,2,\"46001\",7\r\n",
+#endif
         "OK\r\n",
         NULL,
         1,
-        5000,
+        500,
         PPPOS_CHATSCRIPT_START_CREG_QUERY,
         PPPOS_CHATSCRIPT_START_CREG_QUERY);
     break;

@@ -68,6 +68,9 @@ static const int err_to_errno_table[] = {
 int
 err_to_errno(err_t err)
 {
+  if (err == ERR_ABRT || err == ERR_RST || err == ERR_CLSD) {
+    printf("err_to_errno:%d", err);
+  }
   if ((err > 0) || (-err >= (err_t)LWIP_ARRAYSIZE(err_to_errno_table))) {
     return EIO;
   }

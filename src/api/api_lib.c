@@ -1145,6 +1145,9 @@ netconn_err(struct netconn *conn)
   }
   SYS_ARCH_PROTECT(lev);
   err = conn->pending_err;
+  if (err == ERR_CLSD || err == ERR_RST) {
+    printf("netconn_err Why");
+  }
   conn->pending_err = ERR_OK;
   SYS_ARCH_UNPROTECT(lev);
   return err;

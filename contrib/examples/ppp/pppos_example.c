@@ -171,6 +171,7 @@ ppp_link_status_cb(ppp_pcb *pcb, int err_code, void *ctx)
   {
 #if LWIP_DNS
     const ip_addr_t *ns;
+    ip_addr_t dns_ip2;
 #endif /* LWIP_DNS */
     lwip_printfw("ppp_link_status_cb: PPPERR_NONE\n\r");
 #if LWIP_IPV4
@@ -185,6 +186,8 @@ ppp_link_status_cb(ppp_pcb *pcb, int err_code, void *ctx)
 #if LWIP_DNS
     ns = dns_getserver(0);
     lwip_printfw("   dns1        = %s\n\r", ipaddr_ntoa(ns));
+    ipaddr_aton("114.114.114.114", &dns_ip2);
+    dns_setserver(1, &dns_ip2);
     ns = dns_getserver(1);
     lwip_printfw("   dns2        = %s\n\r", ipaddr_ntoa(ns));
 #endif /* LWIP_DNS */
@@ -211,6 +214,10 @@ ppp_link_status_cb(ppp_pcb *pcb, int err_code, void *ctx)
 
   case PPPERR_USER: /* User interrupt. */
     lwip_printfi("ppp_link_status_cb: PPPERR_USER\n");
+#if LWIP_DNS
+    dns_setserver(0, IP_ADDR_ANY);
+    dns_setserver(1, IP_ADDR_ANY);
+#endif /* LWIP_DNS */
     break;
 
   case PPPERR_CONNECT: /* Connection lost. */
@@ -676,12 +683,6 @@ void pppos_example_init(
   u32_t sio_buffer_size)
 {
   const char *username = NULL, *password = NULL;
-  ip_addr_t dns_ip1;
-  ip_addr_t dns_ip2;
-  ipaddr_aton("114.114.114.114", &dns_ip1);
-  ipaddr_aton("180.76.76.76", &dns_ip2);
-  dns_setserver(0, &dns_ip1);
-  dns_setserver(1, &dns_ip2);
 
 #if PPPOS_SUPPORT
   memset(&modem, 0, sizeof(modem));
@@ -711,7 +712,7 @@ void pppos_example_init(
   }
 
   ppp_set_auth(modem.ppp, PPPAUTHTYPE_ANY, username, password);
-
+  ppp_set_usepeerdns(modem.ppp, true);
 #if LWIP_NETIF_STATUS_CALLBACK
   netif_set_status_callback(&modem.netif, netif_status_callback);
 #endif /* LWIP_NETIF_STATUS_CALLBACK */

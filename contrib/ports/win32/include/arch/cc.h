@@ -70,6 +70,7 @@ typedef int sys_prot_t;
  * because these do not work with MSVC 2010 compiler (no inttypes.h)
  */
 #define LWIP_NO_INTTYPES_H 1
+#define LWIP_NO_UNISTD_H 1
 
 /* Define (sn)printf formatters for these lwIP types */
 #define X8_F  "02x"

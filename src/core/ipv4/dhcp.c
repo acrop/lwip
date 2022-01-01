@@ -1914,8 +1914,10 @@ dhcp_create_msg(struct netif *netif, struct dhcp *dhcp, u8_t message_type, u16_t
   msg_out->htype = LWIP_IANA_HWTYPE_ETHERNET;
   msg_out->hlen = netif->hwaddr_len;
   msg_out->xid = lwip_htonl(dhcp->xid);
-  /* we don't need the broadcast flag since we can receive unicast traffic
-     before being fully configured! */
+#if 1
+  /* we need set the broadcast flag as we will modify the MAC address for bridging with WiFi interface! */
+  msg_out->flags = lwip_htons(0x8000);
+#endif
   /* set ciaddr to netif->ip_addr based on message_type and state */
   if ((message_type == DHCP_INFORM) || (message_type == DHCP_DECLINE) || (message_type == DHCP_RELEASE) ||
       ((message_type == DHCP_REQUEST) && /* DHCP_STATE_BOUND not used for sending! */

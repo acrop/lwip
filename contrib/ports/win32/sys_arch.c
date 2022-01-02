@@ -319,9 +319,15 @@ sys_arch_sem_wait(sys_sem_t *sem, u32_t timeout)
     ret = WaitForSingleObject(sem->sem, timeout);
     LWIP_ASSERT("Error waiting for semaphore", (ret == WAIT_OBJECT_0) || (ret == WAIT_TIMEOUT));
     if (ret == WAIT_OBJECT_0) {
+      u32_t time_elapsed;
       endtime = sys_get_ms_longlong();
       /* return the time we waited for the sem */
-      return (u32_t)(endtime - starttime);
+      time_elapsed = (u32_t)(endtime - starttime);
+      if (time_elapsed == SYS_ARCH_TIMEOUT) {
+        return time_elapsed - 1;
+      } else {
+        return time_elapsed;
+      }
     } else {
       /* timeout */
       return SYS_ARCH_TIMEOUT;

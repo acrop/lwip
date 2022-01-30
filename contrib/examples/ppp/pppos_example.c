@@ -158,7 +158,7 @@ pppos_modem_start(pppos_modem_t *modem)
   modem->state = PPPOS_CHATSCRIPT_START_ATE0;
   modem->phase_saved = 0xff;
   sys_timeout(1, pppos_rx_interval, (void *)modem);
-  sys_timeout(1, pppos_state_interval, (void *)modem);
+  sys_timeout(5000, pppos_state_interval, (void *)modem);
 }
 
 static void

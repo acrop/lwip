@@ -509,9 +509,8 @@ static void pppos_state_interval(void *arg)
     sys_timeout(0, pppos_state_interval, arg);
     break;
   case PPPOS_CHATSCRIPT_BEGIN:
-    //before start ppp sleep, when do not need start ppp,the task already over and step into sleep
     modem->state = PPPOS_CHATSCRIPT_AT_MODE_PRE_WAIT;
-    sys_timeout(5000, pppos_state_interval, arg);
+    sys_timeout(100, pppos_state_interval, arg);
     break;
   case PPPOS_CHATSCRIPT_AT_MODE_PRE_WAIT:
     PPPDEBUG(LOG_DEBUG, ("Trying to exit ppp mode\n"));

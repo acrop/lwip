@@ -3001,12 +3001,17 @@ lwip_getsockopt_impl(int s, int level, int optname, void *optval, socklen_t *opt
                                       s, *(int *)optval));
           break;
 
-        case SO_ERROR:
+        case SO_ERROR: {
+          int tmp_errno = 0;
           LWIP_SOCKOPT_CHECK_OPTLEN(sock, *optlen, int);
-          *(int *)optval = err_to_errno(netconn_err(sock->conn));
-          LWIP_DEBUGF(SOCKETS_DEBUG, ("lwip_getsockopt(%d, SOL_SOCKET, SO_ERROR) = %d\n",
-                                      s, *(int *)optval));
+          tmp_errno = err_to_errno(netconn_err(sock->conn));
+          *(int *)optval = tmp_errno;
+          if (tmp_errno != 0) {
+            LWIP_DEBUGF(SOCKETS_DEBUG, ("lwip_getsockopt(%d, SOL_SOCKET, SO_ERROR) = %d\n",
+                                      s, tmp_errno));
+          }
           break;
+        }
 
 #if LWIP_SO_SNDTIMEO
         case SO_SNDTIMEO:

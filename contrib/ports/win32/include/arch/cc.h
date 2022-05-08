@@ -55,6 +55,8 @@
 #include <sys/time.h>
 #endif
 
+#include <fcntl.h>
+
 /* Define platform endianness (might already be defined) */
 #ifndef BYTE_ORDER
 #define BYTE_ORDER LITTLE_ENDIAN

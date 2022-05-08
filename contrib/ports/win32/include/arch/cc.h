@@ -55,6 +55,12 @@
 #include <sys/time.h>
 #endif
 
+#include <fcntl.h>
+
+#ifndef O_NONBLOCK
+#define O_NONBLOCK 0x0010
+#endif
+
 /* Define platform endianness (might already be defined) */
 #ifndef BYTE_ORDER
 #define BYTE_ORDER LITTLE_ENDIAN

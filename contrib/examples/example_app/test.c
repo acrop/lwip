@@ -150,7 +150,7 @@
 #endif
 
 /* global variables for netifs */
-#if USE_ETHERNET
+#if USE_ETHERNET_TCPIP
 #if LWIP_DHCP
 /* dhcp struct for the ethernet netif */
 static struct dhcp netif_dhcp;
@@ -159,7 +159,7 @@ static struct dhcp netif_dhcp;
 /* autoip struct for the ethernet netif */
 static struct autoip netif_autoip;
 #endif /* LWIP_AUTOIP */
-#endif /* USE_ETHERNET */
+#endif /* USE_ETHERNET_TCPIP */
 #if USE_PPP
 /* THE PPP PCB */
 static ppp_pcb *ppp;

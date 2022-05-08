@@ -36,7 +36,13 @@
 extern "C" {
 #endif
 
-void pppos_example_init(sio_open_option_t *opt);
+#if PPPOS_SUPPORT
+void pppos_example_init(
+  sio_open_option_t *sio_open_option,
+  u8_t set_as_default_netif,
+  u8_t* sio_buffer,
+  u32_t sio_buffer_size);
+#endif
 
 #ifdef __cplusplus
 }

@@ -582,6 +582,7 @@ udp_sendto_chksum(struct udp_pcb *pcb, struct pbuf *p, const ip_addr_t *dst_ip,
     {
       /* find the outgoing network interface for this packet */
       netif = ip_route(&pcb->local_ip, dst_ip);
+      lwip_printf_diag("the route to dst_ip:0x%x netif:0x%p\n", dst_ip->u_addr.ip4.addr, netif);
     }
   }
 

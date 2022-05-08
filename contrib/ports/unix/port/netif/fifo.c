@@ -10,6 +10,7 @@
 #include "lwip/sys.h"
 #include "lwip/arch.h"
 #include <unistd.h>
+#include <stdio.h>
 
 #ifndef TRUE
 #define TRUE  1

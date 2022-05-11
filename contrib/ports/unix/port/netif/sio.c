@@ -159,7 +159,7 @@ static int sio_init(char *device, int devnum, int baud_rate, sio_status_t *siost
     exit(-1);
   }
 #else
-  if (fcntl(fd, F_SETFL, 0) != 0) {
+  if (fcntl(fd, F_SETFL, O_NONBLOCK) != 0) {
     perror(device);
     exit(-1);
   }
@@ -188,12 +188,15 @@ static int sio_init(char *device, int devnum, int baud_rate, sio_status_t *siost
   }
   cfsetispeed(&newtio, (speed_t)baud_rate);
   cfsetospeed(&newtio, (speed_t)baud_rate);
-  newtio.c_cflag = BAUDRATE | CS8 | CLOCAL | CREAD | CRTSCTS;
-  newtio.c_iflag = 0;
-  newtio.c_oflag = 0;
-  newtio.c_lflag = 0;    /*ECHO; */
-  newtio.c_cc[VMIN] = 1; /* Read 1 byte at a time, no timer */
-  newtio.c_cc[VTIME] = 0;
+  newtio.c_cflag |= CREAD | CLOCAL;
+  newtio.c_cflag &= ~CSIZE;
+  newtio.c_cflag |= CS8;
+  newtio.c_cflag &= ~CSTOPB;
+  newtio.c_cflag &= ~PARENB;
+  newtio.c_lflag &= ~(ICANON | ECHO | ECHOE | ISIG);
+  newtio.c_iflag &= ~INPCK;
+  newtio.c_iflag &= ~(IXON | IXOFF | IXANY);
+  newtio.c_oflag &= ~OPOST;
 
   tcsetattr(fd, TCSANOW, &newtio);
   tcflush(fd, TCIOFLUSH);
@@ -353,109 +356,16 @@ sio_fd_t sio_open(u8_t devnum, u32_t baud_rate)
 
   LWIP_DEBUGF(SIO_DEBUG, ("sio_open: for devnum %d\n", devnum));
 
-#if !(PPP_SUPPORT || LWIP_HAVE_SLIPIF)
-  fifoInit(&siostate->myfifo);
-#endif /* ! PPP_SUPPORT */
+  snprintf(dev, sizeof(dev), "/dev/ttymxc%d", devnum);
 
-  snprintf(dev, sizeof(dev), "/dev/ttyS%d", devnum);
-
-  if ((devnum == 1) || (devnum == 0)) {
+  if ((devnum == 1) || (devnum == 2) || (devnum == 3) || (devnum == 6)) {
     if ((siostate->fd = sio_init(dev, devnum, baud_rate, siostate)) == 0) {
       LWIP_DEBUGF(SIO_DEBUG, ("sio_open: ERROR opening serial device dev=%s\n", dev));
       abort();
       return NULL;
     }
     LWIP_DEBUGF(SIO_DEBUG, ("sio_open[%d]: dev=%s open.\n", siostate->fd, dev));
-  }
-#if PPP_SUPPORT
-  else if (devnum == 2) {
-    pid_t childpid;
-    char name[256];
-    childpid = forkpty(&siostate->fd, name, NULL, NULL);
-    if (childpid < 0) {
-      perror("forkpty");
-      exit(1);
-    }
-    if (childpid == 0) {
-      execl("/usr/sbin/pppd", "pppd",
-            "ms-dns", "198.168.100.7",
-            "local", "crtscts",
-            "debug",
-#ifdef LWIP_PPP_CHAP_TEST
-            "auth",
-            "require-chap",
-            "remotename", "lwip",
-#else
-            "noauth",
-#endif
-#if LWIP_IPV6
-            "+ipv6",
-#endif
-            "192.168.1.1:192.168.1.2",
-            NULL);
-      perror("execl pppd");
-      exit(1);
-    } else {
-      LWIP_DEBUGF(SIO_DEBUG, ("sio_open[%d]: spawned pppd pid %d on %s\n",
-                              siostate->fd, childpid, name));
-    }
-
-  }
-#endif
-#if LWIP_HAVE_SLIPIF
-  else if (devnum == 3) {
-    pid_t childpid;
-    /* create PTY pair */
-    siostate->fd = posix_openpt(O_RDWR | O_NOCTTY);
-    if (siostate->fd < 0) {
-      perror("open pty master");
-      exit(1);
-    }
-    if (grantpt(siostate->fd) != 0) {
-      perror("grant pty master");
-      exit(1);
-    }
-    if (unlockpt(siostate->fd) != 0) {
-      perror("unlock pty master");
-      exit(1);
-    }
-    LWIP_DEBUGF(SIO_DEBUG, ("sio_open[%d]: for %s\n",
-                            siostate->fd, ptsname(siostate->fd)));
-    /* fork for slattach */
-    childpid = fork();
-    if (childpid < 0) {
-      perror("fork");
-      exit(1);
-    }
-    if (childpid == 0) {
-      /* esteblish SLIP interface on host side connected to PTY slave */
-      execl("/sbin/slattach", "slattach",
-            "-d", "-v", "-L", "-p", "slip",
-            ptsname(siostate->fd),
-            NULL);
-      perror("execl slattach");
-      exit(1);
-    } else {
-      int ret;
-      char buf[1024];
-      LWIP_DEBUGF(SIO_DEBUG, ("sio_open[%d]: spawned slattach pid %d on %s\n",
-                              siostate->fd, childpid, ptsname(siostate->fd)));
-      /* wait a moment for slattach startup */
-      sleep(1);
-      /* configure SLIP interface on host side as P2P interface */
-      snprintf(buf, sizeof(buf),
-               "/sbin/ifconfig sl0 mtu %d %s pointopoint %s up",
-               SLIP_MAX_SIZE, "192.168.2.1", "192.168.2.2");
-      LWIP_DEBUGF(SIO_DEBUG, ("sio_open[%d]: system(\"%s\");\n", siostate->fd, buf));
-      ret = system(buf);
-      if (ret < 0) {
-        perror("ifconfig failed");
-        exit(1);
-      }
-    }
-  }
-#endif /* LWIP_HAVE_SLIPIF */
-  else {
+  } else {
     LWIP_DEBUGF(SIO_DEBUG, ("sio_open: device %s (%d) is not supported\n", dev, devnum));
     return NULL;
   }

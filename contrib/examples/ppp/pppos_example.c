@@ -72,7 +72,7 @@ enum PPPOS_ChatscriptState {
   PPPOS_CHATSCRIPT_START_CGDCONT_QUERY,
   PPPOS_CHATSCRIPT_START_CREG_QUERY,
   PPPOS_CHATSCRIPT_START_CGDATA,
-  PPPOS_CHATSCRIPT_START_ATO,
+  PPPOS_CHATSCRIPT_START_ATH,
   PPPOS_CHATSCRIPT_ON_CONNECT
 };
 
@@ -493,7 +493,7 @@ static enum at_result_enum pppos_at_creg_check(const char *ack) {
   int creg_a = -1;
   int creg_b = -1;
   if (sscanf(ack, "\r\n+CREG: %d,%d\r\n",  &creg_a, &creg_b) == 2) {
-    if (creg_b == 1 || creg_b == 5) {
+    if (creg_b == 1 || creg_b == 6) {
       return at_result_success;
     }
   }
@@ -628,19 +628,19 @@ typedef enum
         1,
         500,
         PPPOS_CHATSCRIPT_ON_CONNECT,
-        PPPOS_CHATSCRIPT_START_ATO);
+        PPPOS_CHATSCRIPT_START_ATH);
     break;
-  case PPPOS_CHATSCRIPT_START_ATO:
+  case PPPOS_CHATSCRIPT_START_ATH:
     pppos_command_run(
         modem,
         pppos_state_interval,
-        "ATO\r\n",
+        "ATH\r\n",
         "CONNECT\r\n",
         NULL,
         1,
         500,
-        PPPOS_CHATSCRIPT_ON_CONNECT,
-        PPPOS_CHATSCRIPT_START_ATO);
+        PPPOS_CHATSCRIPT_START_ATE0,
+        PPPOS_CHATSCRIPT_START_ATE0);
     break;
   case PPPOS_CHATSCRIPT_ON_CONNECT: {
     u8_t phase_saved = modem->phase_saved;

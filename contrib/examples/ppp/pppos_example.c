@@ -489,11 +489,11 @@ static void pppos_command_run(
     failure_state);
 }
 
-static enum at_result_enum pppos_at_creg_check(const char *ack) {
+static enum at_result_enum pppos_at_cereg_check(const char *ack) {
   int creg_a = -1;
   int creg_b = -1;
-  if (sscanf(ack, "\r\n+CREG: %d,%d\r\n",  &creg_a, &creg_b) == 2) {
-    if (creg_b == 1 || creg_b == 6) {
+  if (sscanf(ack, "\r\n+CEREG: %d,%d\r\n",  &creg_a, &creg_b) == 2) {
+    if (creg_b == 1 || creg_b == 5) {
       return at_result_success;
     }
   }
@@ -584,10 +584,10 @@ typedef enum
       pppos_command_run_with_check(
         modem,
         pppos_state_interval,
-        "AT+CREG?\r\n",
+        "AT+CEREG?\r\n",
         "OK\r\n",
         NULL,
-        pppos_at_creg_check,
+        pppos_at_cereg_check,
         1,
         500,
         PPPOS_CHATSCRIPT_START_CGDCONT,

@@ -71,6 +71,8 @@
 #define SIO_DEBUG 0
 #endif
 
+//#define LONG_BOARD  1
+
 /*  typedef struct siostruct_t */
 /*  {  */
 /*  	sio_status_t *sio; */
@@ -356,7 +358,13 @@ sio_fd_t sio_open(u8_t devnum, u32_t baud_rate)
 
   LWIP_DEBUGF(SIO_DEBUG, ("sio_open: for devnum %d\n", devnum));
 
+#ifdef LONG_BOARD
+  snprintf(dev, sizeof(dev), "/dev/ttyAS%d", devnum);
+#else
   snprintf(dev, sizeof(dev), "/dev/ttymxc%d", devnum);
+#endif
+
+
 
   if ((devnum == 1) || (devnum == 2) || (devnum == 3) || (devnum == 6)) {
     if ((siostate->fd = sio_init(dev, devnum, baud_rate, siostate)) == 0) {

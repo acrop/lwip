@@ -67,6 +67,16 @@ struct sio_open_option {
 sio_fd_t sio_open(u8_t devnum, u32_t baud_rate);
 #endif
 
+#ifndef sio_close
+/**
+ * close a serial device for communication.
+ *
+ * @param fd serial device handle
+ * @return handle to serial device if successful, NULL otherwise
+ */
+void sio_close(sio_fd_t fd);
+#endif
+
 #ifndef sio_send
 /**
  * Sends a single character to the serial device.

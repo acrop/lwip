@@ -572,6 +572,16 @@ u32_t sio_write(sio_fd_t _fd, const u8_t* data, u32_t len)
 }
 
 /**
+ * close a serial device for communication.
+ *
+ * @param fd serial device handle
+ * @return handle to serial device if successful, NULL otherwise
+ */
+void sio_close(sio_fd_t fd)
+{
+}
+
+/**
  * Aborts a blocking sio_read() call.
  * @todo: This currently ignores fd and aborts all reads
  *

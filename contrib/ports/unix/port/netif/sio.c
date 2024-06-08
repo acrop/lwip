@@ -35,6 +35,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <errno.h>
 #if defined(LWIP_UNIX_OPENBSD)
 #include <util.h>
 #endif
@@ -325,7 +326,14 @@ u32_t sio_write(sio_status_t *siostat, const u8_t *buf, u32_t size)
 u32_t sio_tryread(sio_status_t *siostat, u8_t *buf, u32_t size)
 {
   ssize_t rsz = read(siostat->fd, buf, size);
-  return rsz < 0 ? 0 : rsz;
+  if (rsz < 0) {
+    if (errno == EAGAIN) {
+      return 0;
+    } else {
+      return -1;
+    }
+  }
+  return rsz;
 }
 
 u32_t sio_read(sio_status_t *siostat, u8_t *buf, u32_t size)
@@ -412,6 +420,16 @@ void sio_change_baud(sioBaudrates baud, sio_status_t *siostat)
                             siostat->fd, baud));
     break;
   }
+}
+
+void sio_close(sio_status_t *siostat)
+{
+  if (siostat->fd <= 0) {
+    return;
+  }
+
+  close(siostat->fd);
+  return;
 }
 
 u8_t sio_reconnected(sio_fd_t _fd)

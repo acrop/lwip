@@ -429,7 +429,7 @@ void sio_close(sio_status_t *siostat)
   }
 
   close(siostat->fd);
-  siostat->fd = NULL;
+  siostat->fd = -1;
   return;
 }
 

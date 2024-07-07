@@ -127,8 +127,7 @@ static int sio_init(char *device, int devnum, int baud_rate, sio_status_t *siost
   /* open the device to be non-blocking (read will return immediately) */
   fd = open(device, O_RDWR | O_NOCTTY | O_NONBLOCK);
   if (fd < 0) {
-    perror(device);
-    exit(-1);
+    return -1;
   }
 
 #if !(PPP_SUPPORT || LWIP_HAVE_SLIPIF)
@@ -163,8 +162,7 @@ static int sio_init(char *device, int devnum, int baud_rate, sio_status_t *siost
   }
 #else
   if (fcntl(fd, F_SETFL, O_NONBLOCK) != 0) {
-    perror(device);
-    exit(-1);
+    return -1;
   }
 
 #endif /* ! (PPP_SUPPORT || LWIP_HAVE_SLIPIF) */
@@ -375,7 +373,7 @@ sio_fd_t sio_open(u8_t devnum, u32_t baud_rate)
 
 
   if ((devnum == 1) || (devnum == 2) || (devnum == 3) || (devnum == 6)) {
-    if ((siostate->fd = sio_init(dev, devnum, baud_rate, siostate)) == 0) {
+    if ((siostate->fd = sio_init(dev, devnum, baud_rate, siostate)) < 0) {
       LWIP_DEBUGF(SIO_DEBUG, ("sio_open: ERROR opening serial device dev=%s\n", dev));
       abort();
       return NULL;
@@ -424,7 +422,11 @@ void sio_change_baud(sioBaudrates baud, sio_status_t *siostat)
 
 void sio_close(sio_status_t *siostat)
 {
-  if (siostat->fd <= 0) {
+  if (siostat == NULL) {
+    return;
+  }
+
+  if (siostat->fd < 0) {
     return;
   }
 

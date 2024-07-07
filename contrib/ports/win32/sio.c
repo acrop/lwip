@@ -577,8 +577,14 @@ u32_t sio_write(sio_fd_t _fd, const u8_t* data, u32_t len)
  * @param fd serial device handle
  * @return handle to serial device if successful, NULL otherwise
  */
-void sio_close(sio_fd_t fd)
+void sio_close(sio_fd_t _fd)
 {
+  if (_fd == NULL) {
+    return;
+  }
+  sio_win32_fd_t *fd = (sio_win32_fd_t *)(_fd);
+  CloseHandle(fd->handle);
+  free(fd);
 }
 
 /**

@@ -199,6 +199,9 @@ static int sio_init(char *device, int devnum, int baud_rate, sio_status_t *siost
   newtio.c_iflag &= ~(IXON | IXOFF | IXANY);
   newtio.c_oflag &= ~OPOST;
 
+  newtio.c_cc[VMIN] = 0;
+  newtio.c_cc[VTIME] = 0;
+
   tcsetattr(fd, TCSANOW, &newtio);
   tcflush(fd, TCIOFLUSH);
 

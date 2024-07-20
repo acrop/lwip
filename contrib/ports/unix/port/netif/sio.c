@@ -82,6 +82,8 @@
 /** array of ((siostruct*)netif->state)->sio structs */
 static sio_status_t statusar[4];
 
+int count = 0;
+
 #if !(PPP_SUPPORT || LWIP_HAVE_SLIPIF)
 /* --private-functions----------------------------------------------------------------- */
 /**
@@ -312,6 +314,7 @@ void sio_expect_string(u8_t *str, sio_status_t *siostat)
 u32_t sio_write(sio_status_t *siostat, const u8_t *buf, u32_t size)
 {
   ssize_t wsz = write(siostat->fd, buf, size);
+  printf("write fd = %d size = %d\n", siostat->fd, wsz);
   return wsz < 0 ? 0 : wsz;
 }
 
@@ -327,6 +330,15 @@ u32_t sio_write(sio_status_t *siostat, const u8_t *buf, u32_t size)
 u32_t sio_tryread(sio_status_t *siostat, u8_t *buf, u32_t size)
 {
   ssize_t rsz = read(siostat->fd, buf, size);
+  if (rsz > 0) {
+    printf("#read fd = %d size = %d bufsize = %d\n", siostat->fd, rsz, size);
+  } else {
+    count++;
+    if (count > 100) {
+      count = 0;
+      printf("$read fd = %d size = %d bufsize = %d\n", siostat->fd, rsz, size);
+    }
+  }
   if (rsz < 0) {
     if (errno == EAGAIN) {
       return 0;

@@ -312,7 +312,6 @@ void sio_expect_string(u8_t *str, sio_status_t *siostat)
 u32_t sio_write(sio_status_t *siostat, const u8_t *buf, u32_t size)
 {
   ssize_t wsz = write(siostat->fd, buf, size);
-  printf("write fd = %d size = %d\n", siostat->fd, wsz);
   return wsz < 0 ? 0 : wsz;
 }
 

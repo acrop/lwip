@@ -78,7 +78,6 @@ src += Glob('src/netif/ppp/polarssl/md4.c')
 src += Glob('src/netif/ppp/polarssl/md5.c')
 src += Glob('src/netif/ppp/polarssl/sha1.c')
 
-src += Glob('contrib/examples/ppp/pppos_example.c')
 
 CPPPATH = [
   cwd,

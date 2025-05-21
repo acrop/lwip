@@ -597,8 +597,8 @@ typedef enum
     pppos_command_run(
         modem,
         pppos_state_interval,
-        "AT+CGDCONT=1,\"IP\",\"CMIOT\"\r\n",
-        /*"AT+CGDCONT=1,\"IPV4V6\"\r\n",*/
+        /*"AT+CGDCONT=1,\"IP\",\"CMIOT\"\r\n",*/
+        "AT+CGDCONT=1,\"IPV4V6\"\r\n",
         "OK\r\n",
         NULL,
         1,
